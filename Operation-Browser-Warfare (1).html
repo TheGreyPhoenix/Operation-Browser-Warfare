@@ -1,0 +1,1207 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Operation Browser Warfare</title>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+  :root{
+    --bg:#12151c;
+    --bg2:#0c0e13;
+    --panel:#1a1f2a;
+    --panel2:#222836;
+    --line:#343b4d;
+    --ink:#e8e4d8;
+    --muted:#9aa3b5;
+    --gold:#c9a35a;
+    --gold2:#e8c878;
+    --red:#d06a62;
+    --green:#7db992;
+    --blue:#7ea3d6;
+    --player:#c9a35a;
+    --crown:#7ea3d6;
+    --march:#d06a62;
+    --clan:#7db992;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0}
+  body{
+    background:
+      radial-gradient(ellipse at 10% -10%,#2a2430 0,transparent 42%),
+      radial-gradient(ellipse at 100% 0%,#1c2833 0,transparent 36%),
+      var(--bg);
+    color:var(--ink);
+    font:15px/1.45 "Segoe UI",system-ui,sans-serif;
+    overflow:hidden;
+  }
+  button,input,select{font:inherit;color:inherit}
+  button{cursor:pointer}
+  button:disabled{opacity:.45;cursor:not-allowed}
+  #app{height:100%;display:grid;grid-template-rows:auto auto auto auto auto minmax(0,1fr) auto}
+  .mast,.resbar,.tabs,.subs,.dock{padding-left:18px;padding-right:18px}
+  .mast{
+    display:flex;justify-content:space-between;align-items:flex-end;gap:16px;
+    padding-top:12px;padding-bottom:10px;border-bottom:1px solid var(--line);
+    background:linear-gradient(#1b202bcc,#12151c);
+  }
+  .eyebrow{font:800 10px/1.2 Arial,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:var(--gold)}
+  h1{margin:4px 0 0;font-size:clamp(1.4rem,3vw,2.1rem);letter-spacing:-.04em;line-height:1}
+  .sub{margin:4px 0 0;color:var(--muted);font-size:13px}
+  .mast-tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+  .pill{
+    border:1px solid var(--line);background:var(--panel2);padding:7px 11px;
+    font:800 11px/1 Arial,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:var(--gold2)
+  }
+  .resbar{
+    display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;
+    padding-top:8px;padding-bottom:8px;background:#10131a;border-bottom:1px solid var(--line)
+  }
+  .res{background:var(--panel);border:1px solid var(--line);padding:8px 10px;min-width:0}
+  .res span{display:block;color:var(--muted);font:800 10px/1 Arial,sans-serif;letter-spacing:.08em;text-transform:uppercase}
+  .res b{display:block;margin-top:3px;font-size:1.05rem;letter-spacing:-.03em}
+  .tabs{
+    display:flex;gap:6px;padding-top:8px;padding-bottom:8px;
+    background:#0e1117;border-bottom:0;overflow-x:auto
+  }
+  .subs{
+    display:flex;gap:6px;align-items:center;padding-top:0;padding-bottom:8px;
+    background:#0e1117;border-bottom:1px solid var(--line);overflow-x:auto
+  }
+  .subs.nested{background:#141821;padding-top:6px}
+  .subs-label{
+    font:800 10px/1 Arial,sans-serif;letter-spacing:.12em;text-transform:uppercase;
+    color:var(--muted);padding-right:8px;border-right:1px solid var(--line);margin-right:4px;white-space:nowrap
+  }
+  .tab,.subtab,.btn{
+    border:1px solid var(--line);background:var(--panel2);color:var(--ink);
+    padding:8px 12px;min-height:40px;font-weight:750
+  }
+  .tab,.subtab{flex:0 0 auto;letter-spacing:.02em}
+  .subtab{
+    min-height:34px;padding:6px 11px;border-radius:999px;background:#161b25;font-size:13px
+  }
+  .tab[aria-selected="true"],.btn.primary{background:var(--gold);border-color:var(--gold);color:#1a1408}
+  .subtab[aria-selected="true"]{background:#2b261b;border-color:var(--gold);color:var(--gold2)}
+  .btn.danger{border-color:#7a3d3a;color:#f0b0ab}
+  .btn.ghost{background:transparent}
+  .btn.small{min-height:34px;padding:5px 9px;font-size:13px}
+  .stage{min-height:0;overflow:auto;padding:14px 18px 18px}
+  .view{display:none;height:100%}
+  .view.active{display:block}
+  .split{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(280px,0.75fr);gap:14px;min-height:100%}
+  .split.even{grid-template-columns:1fr 1fr}
+  .panel{
+    background:var(--panel);border:1px solid var(--line);padding:16px;min-width:0
+  }
+  .panel h2{margin:0 0 8px;font-size:1.15rem}
+  .panel h3{margin:0 0 8px;font-size:1rem}
+  .muted{color:var(--muted)}
+  .tiny{font-size:12px}
+  .good{color:var(--green)}
+  .bad{color:var(--red)}
+  .gold{color:var(--gold2)}
+  .row{display:flex;justify-content:space-between;align-items:center;gap:10px}
+  .wrap{flex-wrap:wrap}
+  .stack{display:grid;gap:10px}
+  .grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+  .card{background:var(--panel2);border:1px solid var(--line);padding:12px;min-width:0}
+  .card.selected,.node.selected{outline:2px solid var(--gold)}
+  .bar{height:7px;background:#10131a;overflow:hidden;margin-top:6px}
+  .bar i{display:block;height:100%;background:var(--gold)}
+  .chip{display:inline-flex;align-items:center;border:1px solid var(--line);padding:3px 8px;font-size:11px;color:var(--muted);margin:2px 4px 2px 0}
+  .chip.on{color:var(--gold2);border-color:#6d5a32}
+  .note{border-left:3px solid var(--gold);background:var(--panel2);padding:10px 12px;font-size:13px;color:var(--muted)}
+  .empty{border:1px dashed var(--line);padding:22px;color:var(--muted);text-align:center}
+  .dock{
+    display:flex;justify-content:space-between;align-items:center;gap:12px;
+    padding-top:8px;padding-bottom:10px;border-top:1px solid var(--line);
+    background:#0e1117
+  }
+  .mapwrap{position:relative;height:min(62vh,560px);background:#0d1118;border:1px solid var(--line)}
+  svg.map{width:100%;height:100%;display:block}
+  .node{cursor:pointer}
+  .node circle{stroke:#0b0d12;stroke-width:3}
+  .node text{font:700 11px Arial,sans-serif;fill:#f2eee4;pointer-events:none}
+  .link{stroke:#3a4254;stroke-width:2}
+  .unit-row{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center}
+  .step{display:flex;gap:6px;align-items:center}
+  .step button{width:32px;height:32px;padding:0}
+  .log{max-height:220px;overflow:auto}
+  .log article{padding:8px 0;border-bottom:1px solid var(--line);font-size:13px}
+  .owner-player{fill:var(--player)}
+  .owner-crown{fill:var(--crown)}
+  .owner-march{fill:var(--march)}
+  .owner-clan{fill:var(--clan)}
+  .owner-wild{fill:#6a7180}
+  .toast{
+    position:fixed;left:50%;bottom:64px;transform:translateX(-50%);
+    background:#2a2430;border:1px solid var(--gold);padding:10px 14px;max-width:min(90vw,520px);z-index:20
+  }
+  .hidden{display:none!important}
+  @media(max-width:900px){
+    .split,.split.even,.grid2,.grid3,.resbar{grid-template-columns:1fr 1fr}
+    h1{font-size:1.35rem}
+  }
+  @media(max-width:640px){
+    body{overflow:auto}
+    #app{height:auto;min-height:100%}
+    .resbar,.grid3{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .split,.split.even{grid-template-columns:1fr}
+    .mast{align-items:flex-start;flex-direction:column}
+    .tabs,.subs{position:sticky;top:0;z-index:5}
+    .subs{top:48px}
+    .dock{flex-direction:column;align-items:stretch}
+    .dock .btn{width:100%}
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="mast">
+    <div>
+      <div class="eyebrow">Operation Browser Warfare</div>
+      <h1 id="realm-name">The Ashen Hold</h1>
+      <p class="sub">Raise the levy. March the host. Make the other houses change how they fight.</p>
+    </div>
+    <div class="mast-tools">
+      <div class="pill" id="when">Year 1 · Spring</div>
+      <button class="btn small" data-act="rename">Rename realm</button>
+      <button class="btn small" data-act="new">New campaign</button>
+    </div>
+  </header>
+  <section class="resbar" id="resbar"></section>
+  <nav class="tabs" id="tabs" aria-label="What you are viewing"></nav>
+  <nav class="subs" id="subs" aria-label="Screens in this view"></nav>
+  <nav class="subs nested hidden" id="settle-subs" aria-label="Screens in this settlement"></nav>
+  <main class="stage">
+    <section class="view active" id="stage"></section>
+  </main>
+  <footer class="dock">
+    <div class="tiny muted" id="dock-copy">One screen at a time. End the season when the host is ready.</div>
+    <div class="row wrap">
+      <button class="btn" data-act="save">Save</button>
+      <button class="btn primary" data-act="end">End season</button>
+    </div>
+  </footer>
+</div>
+<div id="toast" class="toast hidden"></div>
+<script>
+(() => {
+  const KEY = 'obw-v2';
+  const CLIENT_KEY = 'obw-google-client';
+  const FILE_KEY = 'obw-drive-file';
+  const CLOUD_NAME = 'obw-campaign.json';
+  const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.appdata https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile openid';
+  const memoryStore = {};
+  let persistOk = false;
+  try{
+    const probe = '__obw_probe__';
+    window.localStorage.setItem(probe,'1');
+    window.localStorage.removeItem(probe);
+    persistOk = true;
+  }catch{ persistOk = false; }
+  function storeGet(k){
+    if(persistOk){
+      try{ return window.localStorage.getItem(k); }catch{}
+    }
+    return Object.prototype.hasOwnProperty.call(memoryStore,k) ? memoryStore[k] : null;
+  }
+  function storeSet(k,v){
+    memoryStore[k] = v;
+    if(!persistOk) return;
+    try{ window.localStorage.setItem(k,v); }catch{}
+  }
+  function storeDel(k){
+    delete memoryStore[k];
+    if(!persistOk) return;
+    try{ window.localStorage.removeItem(k); }catch{}
+  }
+  const SEASONS = ['Spring','Summer','Harvest','Winter'];
+  const FACTIONS = {
+    player: {id:'player', name:'The Ashen Hold', color:'player', doctrine:'balanced'},
+    crown:  {id:'crown',  name:'High Court',     color:'crown',  doctrine:'line'},
+    march:  {id:'march',  name:'Marcher Lords',  color:'march',  doctrine:'raid'},
+    clan:   {id:'clan',   name:'Highland Clans', color:'clan',   doctrine:'shot'}
+  };
+  const UNITS = {
+    militia:    {name:'Militia',      role:'screen', cost:{gold:8, food:6, manpower:4},  atk:3, def:4, shock:1, shot:0, unlock:null},
+    swordsmen:  {name:'Swordsmen',    role:'line',   cost:{gold:18,food:10,manpower:6}, atk:7, def:7, shock:2, shot:0, unlock:{b:'barracks',n:1,lv:1}},
+    pikemen:    {name:'Pikemen',      role:'pike',   cost:{gold:20,food:12,manpower:6}, atk:5, def:8, shock:1, shot:0, unlock:{b:'barracks',n:2,lv:2}},
+    crossbows:  {name:'Crossbows',    role:'shot',   cost:{gold:22,food:8, iron:4, manpower:5}, atk:4, def:4, shock:0, shot:8, unlock:{b:'range',n:1,lv:1}},
+    longbows:   {name:'Longbows',     role:'shot',   cost:{gold:24,food:8, timber:4, manpower:5}, atk:3, def:3, shock:0, shot:9, unlock:{b:'range',n:2,lv:2}},
+    lightHorse: {name:'Light Horse',  role:'raid',   cost:{gold:28,food:14,manpower:5}, atk:6, def:3, shock:4, shot:0, unlock:{b:'stables',n:1,lv:2}},
+    heavyHorse: {name:'Heavy Horse',  role:'shock',  cost:{gold:40,food:16,iron:6,manpower:6}, atk:6, def:5, shock:10, shot:0, unlock:{b:'stables',n:2,lv:3}},
+    horseBow:   {name:'Horse Archers',role:'kite',   cost:{gold:36,food:14,manpower:5}, atk:4, def:3, shock:2, shot:7, unlock:{b:'stables',n:2,lv:3}}
+  };
+  const BUILDINGS = {
+    barracks: {name:'Barracks', max:2, gold:[30,70],    need:[1,2], desc:'I: swordsmen. II: pikemen.'},
+    range:    {name:'Range',    max:2, gold:[35,75],    need:[1,2], desc:'I: crossbows. II: longbows.'},
+    stables:  {name:'Stables',  max:2, gold:[45,95],    need:[2,3], desc:'I: light horse. II: heavy horse and horse archers.'},
+    granary:  {name:'Granary',  max:3, gold:[25,55,90], need:[1,1,2], desc:'Local food and manpower.'},
+    smith:    {name:'Smith',    max:2, gold:[40,85],    need:[2,3], desc:'Iron and a combat edge for this garrison.'}
+  };
+  const LEVEL_COST = [0,55,100,160];
+  const LEVEL_MAX = 4;
+  const PROVINCES = [
+    {id:'ashen',    name:'Ashen Hold',  x:180, y:250, terrain:'hold',   start:'player'},
+    {id:'millford', name:'Millford',    x:300, y:210, terrain:'open',   start:'player'},
+    {id:'redford',  name:'Red Ford',    x:250, y:340, terrain:'river',  start:'player'},
+    {id:'oakholt',  name:'Oakholt',     x:120, y:160, terrain:'wood',   start:'wild'},
+    {id:'crowmarsh',name:'Crowmarsh',   x:420, y:180, terrain:'open',   start:'crown'},
+    {id:'kings',    name:'Kingsbarrow', x:540, y:140, terrain:'hold',   start:'crown'},
+    {id:'rivermouth',name:'Rivermouth', x:560, y:260, terrain:'river',  start:'crown'},
+    {id:'thorn',    name:'Thornvale',   x:400, y:320, terrain:'open',   start:'wild'},
+    {id:'saltwick', name:'Saltwick',    x:140, y:380, terrain:'open',   start:'march'},
+    {id:'blackfen', name:'Blackfen',    x:280, y:430, terrain:'wood',   start:'march'},
+    {id:'wold',     name:'The Wold',    x:80,  y:280, terrain:'open',   start:'march'},
+    {id:'dunridge', name:'Dunridge',    x:430, y:80,  terrain:'hill',   start:'clan'},
+    {id:'greypeak', name:'Greypeak',    x:300, y:70,  terrain:'hill',   start:'clan'},
+    {id:'highmere', name:'Highmere',    x:200, y:90,  terrain:'wood',   start:'clan'}
+  ];
+  const EDGES = [
+    ['ashen','millford'],['ashen','redford'],['ashen','oakholt'],['ashen','wold'],
+    ['millford','crowmarsh'],['millford','greypeak'],['millford','oakholt'],
+    ['redford','thorn'],['redford','blackfen'],['redford','saltwick'],
+    ['crowmarsh','kings'],['crowmarsh','rivermouth'],['crowmarsh','thorn'],['crowmarsh','dunridge'],
+    ['kings','dunridge'],['kings','rivermouth'],
+    ['thorn','rivermouth'],['saltwick','blackfen'],['saltwick','wold'],
+    ['greypeak','highmere'],['greypeak','dunridge'],['highmere','oakholt']
+  ];
+
+  const NAV = {
+    realm: {
+      label: 'Realm',
+      hint: 'The season and the ledger',
+      subs: {overview:'Overview', ledger:'Ledger', account:'Account'}
+    },
+    warfare: {
+      label: 'Warfare',
+      hint: 'Map first, then a settlement',
+      subs: {map:'Map', settlement:'Settlement', report:'Field report'}
+    },
+    SETTLEMENT: {overview:'Overview', works:'Works', levy:'Levy'},
+    factions: {
+      label: 'Factions',
+      hint: 'Rival houses',
+      subs: {houses:'Houses'}
+    }
+  };
+  let group = 'realm';
+  let sub = {realm:'overview', warfare:'map', factions:'houses'};
+  let selected = 'ashen';
+  let focus = null;
+  let settleTab = 'overview';
+  let lastBattle = null;
+  let S = load() || newGame();
+  function currentSubs(){
+    return NAV[group].subs;
+  }
+  function openView(g, s, nest){
+    group = g;
+    if(s) sub[g] = s;
+    if(nest) settleTab = nest;
+    const subs = currentSubs();
+    if(!subs[sub[g]]) sub[g] = Object.keys(subs)[0];
+    if(!NAV.SETTLEMENT[settleTab]) settleTab = 'overview';
+  }
+  function enterSettlement(id){
+    selected = id;
+    const st = S.provinces[id];
+    if(st.owner==='player'){
+      focus = id;
+      openView('warfare','settlement','overview');
+    } else {
+      openView('warfare','map');
+    }
+  }
+
+  function emptyArmy(){
+    return {militia:0,swordsmen:0,pikemen:0,crossbows:0,longbows:0,lightHorse:0,heavyHorse:0,horseBow:0};
+  }
+  function seedArmy(kind){
+    const a = emptyArmy();
+    if(kind==='player'){a.militia=40;a.swordsmen=16;return a}
+    if(kind==='crown'){a.militia=30;a.swordsmen=24;a.heavyHorse=6;return a}
+    if(kind==='march'){a.militia=36;a.lightHorse=18;a.horseBow=6;return a}
+    if(kind==='clan'){a.militia=28;a.longbows=18;a.swordsmen=8;return a}
+    a.militia=12;return a;
+  }
+  function blankBuildings(){return {barracks:0,range:0,stables:0,granary:0,smith:0}}
+  function seedSettle(p){
+    const owner = p.start==='wild' ? 'wild' : p.start;
+    const capital = p.terrain==='hold';
+    const level = owner==='wild' ? 1 : capital ? (owner==='player'?2:3) : 1;
+    const buildings = blankBuildings();
+    if(owner!=='wild') buildings.granary = 1;
+    if(capital) buildings.smith = 1;
+    if(owner==='player' && p.id==='ashen') buildings.barracks = 1;
+    if(owner==='crown' && capital){buildings.barracks=1;buildings.stables=1}
+    if(owner==='march') buildings.stables = 1;
+    if(owner==='clan' || p.terrain==='hill') buildings.range = 1;
+    let army = seedArmy(owner);
+    if(owner==='player' && p.id!=='ashen') army = Object.assign(emptyArmy(), {militia:12});
+    if(owner==='wild') army = Object.assign(emptyArmy(), {militia:10});
+    return {owner, army, burned:0, level, buildings, works:null, manpower: 10 + level*6};
+  }
+  function newGame(){
+    const provinces = {};
+    for(const p of PROVINCES) provinces[p.id] = seedSettle(p);
+    return {
+      name: 'The Ashen Hold',
+      year: 1, season: 0,
+      gold: 140, food: 90, timber: 45, iron: 28, authority: 8,
+      provinces,
+      memory: {crown:'line', march:'raid', clan:'shot'},
+      log: [{t:'Year 1 Spring', m:'Each settlement is its own work. Open the map and pick one.'}]
+    };
+  }
+  function migrate(raw){
+    if(!raw || !raw.provinces) return newGame();
+    for(const p of PROVINCES){
+      const st = raw.provinces[p.id];
+      if(!st){ raw.provinces[p.id] = seedSettle(p); continue; }
+      if(!st.buildings){
+        const g = raw.buildings || {};
+        const useGlobal = p.id==='ashen' && raw.buildings;
+        st.level = st.level || (useGlobal ? (g.keep||1) : 1);
+        st.buildings = useGlobal ? {
+          barracks:g.barracks||0, range:g.range||0, stables:g.stables||0,
+          granary:g.granary||0, smith:g.smith||0
+        } : blankBuildings();
+        st.works = useGlobal ? (raw.works||null) : null;
+        st.manpower = st.manpower ?? (8 + (st.level||1)*6);
+      }
+      st.level = st.level || 1;
+      st.buildings = Object.assign(blankBuildings(), st.buildings);
+    }
+    delete raw.buildings; delete raw.works; delete raw.manpower;
+    return raw;
+  }
+  const account = {
+    clientId: storeGet(CLIENT_KEY) || '',
+    token: null,
+    profile: null,
+    fileId: storeGet(FILE_KEY) || '',
+    busy: false,
+    lastCloud: null
+  };
+  function packSave(){
+    return {savedAt: Date.now(), campaign: S};
+  }
+  function unwrapSave(raw){
+    if(!raw) return null;
+    if(raw.campaign && raw.campaign.provinces) return migrate(raw.campaign);
+    if(raw.provinces) return migrate(raw);
+    return null;
+  }
+  function load(){
+    try{
+      const raw = storeGet(KEY) || storeGet('obw-v1');
+      return raw ? unwrapSave(JSON.parse(raw)) : null;
+    }catch{return null}
+  }
+  function save(){
+    storeSet(KEY, JSON.stringify(packSave()));
+    if(account.token) cloudPush().catch(err=>toast(err.message||'Cloud save failed.'));
+  }
+  function toast(m){
+    const el = document.getElementById('toast');
+    el.textContent = m; el.classList.remove('hidden');
+    clearTimeout(toast._t); toast._t = setTimeout(()=>el.classList.add('hidden'), 2800);
+  }
+  function authHeader(){return {Authorization:'Bearer '+account.token}}
+  async function driveJSON(url, opt={}){
+    const res = await fetch(url, Object.assign({headers: Object.assign({'Content-Type':'application/json'}, authHeader())}, opt));
+    if(!res.ok) throw Error('Drive request failed ('+res.status+').');
+    if(res.status===204) return null;
+    const text = await res.text();
+    return text ? JSON.parse(text) : null;
+  }
+  async function fetchProfile(){
+    const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {headers:authHeader()});
+    if(!res.ok) throw Error('Could not read the Google profile.');
+    account.profile = await res.json();
+  }
+  async function findCloudFile(){
+    const q = encodeURIComponent("name='"+CLOUD_NAME+"'");
+    const data = await driveJSON('https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&fields=files(id,name,modifiedTime)&q='+q);
+    const file = data.files && data.files[0];
+    account.fileId = file ? file.id : '';
+    if(account.fileId) storeSet(FILE_KEY, account.fileId);
+    else storeDel(FILE_KEY);
+    return file || null;
+  }
+  async function downloadCloud(fileId){
+    const res = await fetch('https://www.googleapis.com/drive/v3/files/'+fileId+'?alt=media', {headers:authHeader()});
+    if(!res.ok) throw Error('Could not download the cloud campaign.');
+    return unwrapSave(await res.json());
+  }
+  async function cloudPush(){
+    if(!account.token) return;
+    account.busy = true;
+    try{
+      if(!account.fileId) await findCloudFile();
+      const body = JSON.stringify(packSave());
+      if(!account.fileId){
+        const meta = {name:CLOUD_NAME, parents:['appDataFolder']};
+        const boundary = 'obw'+Date.now();
+        const mixed = `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(meta)}\r\n--${boundary}\r\nContent-Type: application/json\r\n\r\n${body}\r\n--${boundary}--`;
+        const res = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+          method:'POST',
+          headers: Object.assign({'Content-Type':'multipart/related; boundary='+boundary}, authHeader()),
+          body: mixed
+        });
+        if(!res.ok) throw Error('Could not create the cloud save.');
+        const created = await res.json();
+        account.fileId = created.id;
+        storeSet(FILE_KEY, account.fileId);
+      } else {
+        const res = await fetch('https://www.googleapis.com/upload/drive/v3/files/'+account.fileId+'?uploadType=media', {
+          method:'PATCH',
+          headers: Object.assign({'Content-Type':'application/json'}, authHeader()),
+          body
+        });
+        if(!res.ok){
+          account.fileId = '';
+          storeDel(FILE_KEY);
+          return cloudPush();
+        }
+      }
+      account.lastCloud = Date.now();
+    } finally {
+      account.busy = false;
+    }
+  }
+  async function cloudPull(){
+    if(!account.token) return null;
+    const file = await findCloudFile();
+    if(!file) return null;
+    return downloadCloud(file.id);
+  }
+  function googleReady(){return !!(window.google && google.accounts && google.accounts.oauth2)}
+  function googleSignIn(){
+    if(!account.clientId) return toast('Paste a Google Client ID on the Account screen first.');
+    if(!googleReady()) return toast('Google sign-in is still loading. Wait a second and try again.');
+    const client = google.accounts.oauth2.initTokenClient({
+      client_id: account.clientId,
+      scope: DRIVE_SCOPE,
+      callback: async resp => {
+        if(resp.error){ toast(resp.error_description || resp.error); return; }
+        account.token = resp.access_token;
+        try{
+          await fetchProfile();
+          const remote = await cloudPull();
+          if(remote){
+            const take = !S || confirm('A cloud campaign exists for '+((account.profile&&account.profile.email)||'this account')+'. Load it? Cancel keeps this device and overwrites the cloud on the next save.');
+            if(take){ S = remote; lastBattle = null; focus = null; selected = 'ashen'; }
+            else await cloudPush();
+          } else {
+            await cloudPush();
+          }
+          save();
+          render();
+          toast('Signed in as '+(account.profile.email||account.profile.name||'Google')+'.');
+        }catch(err){ toast(err.message||'Sign-in failed.'); }
+      }
+    });
+    client.requestAccessToken({prompt: account.profile ? '' : 'consent'});
+  }
+  function googleSignOut(){
+    if(account.token && googleReady()){
+      try{ google.accounts.oauth2.revoke(account.token, ()=>{}); }catch{}
+    }
+    account.token = null; account.profile = null;
+    render();
+    toast('Signed out. This browser still has the local campaign.');
+  }
+  function saveClientId(){
+    const el = document.getElementById('google-client-id');
+    account.clientId = (el && el.value || '').trim();
+    if(account.clientId) storeSet(CLIENT_KEY, account.clientId);
+    else storeDel(CLIENT_KEY);
+    toast(account.clientId ? 'Client ID saved on this device.' : 'Client ID cleared.');
+    render();
+  }
+  function clamp(n,a,b){return Math.max(a,Math.min(b,n))}
+  function owned(fid){return PROVINCES.filter(p=>S.provinces[p.id].owner===fid).map(p=>p.id)}
+  function neighbors(id){
+    const out=[];
+    for(const [a,b] of EDGES){if(a===id)out.push(b);if(b===id)out.push(a)}
+    return out;
+  }
+  function unitUnlocked(k, id){
+    const need = UNITS[k].unlock;
+    if(!need) return true;
+    const st = S.provinces[id];
+    return st.level>=need.lv && (st.buildings[need.b]||0)>=need.n;
+  }
+  function productionOf(id){
+    const p = PROVINCES.find(x=>x.id===id), st = S.provinces[id];
+    const lv = st.level, b = st.buildings;
+    return {
+      gold: 3 + lv*2,
+      food: 4 + lv*2 + (b.granary||0)*6,
+      timber: (p.terrain==='wood'?5:1) + lv,
+      iron: (p.terrain==='hill'?3:1) + (b.smith||0)*3,
+      manpower: 6 + lv*4 + (b.granary||0)*3
+    };
+  }
+  function armyCount(a){return Object.values(a).reduce((n,v)=>n+v,0)}
+  function armyPower(a, terrain, smith){
+    const t = terrain||'open';
+    let shot=0,shock=0,line=0,pike=0,raid=0,screen=0;
+    for(const [k,n] of Object.entries(a)){
+      if(!n) continue;
+      const u = UNITS[k];
+      const hill = t==='hill' && (k==='longbows'||k==='crossbows') ? 1.25 : 1;
+      const wood = t==='wood' && (k==='heavyHorse'||k==='lightHorse'||k==='horseBow') ? .65 : 1;
+      const open = t==='open' && (k==='heavyHorse'||k==='horseBow') ? 1.2 : 1;
+      const river = t==='river' && (k==='heavyHorse') ? .7 : 1;
+      const hold = t==='hold' && u.role==='shot' ? 1.1 : (t==='hold' && u.role==='shock' ? .75 : 1);
+      const m = n * hill * wood * open * river * hold * (smith?1.08:1);
+      shot += u.shot * m;
+      shock += u.shock * m;
+      if(u.role==='pike') pike += m*8;
+      if(u.role==='line'||u.role==='pike') line += u.atk * m;
+      if(u.role==='raid'||u.role==='kite') raid += u.atk * m;
+      if(u.role==='screen') screen += u.def * m;
+      line += u.def * m * 0.15;
+    }
+    const antiCav = 1 + Math.min(.6, pike / Math.max(8, shock+raid));
+    const vsPike = shock * (pike>line*0.3 ? 0.55 : 1);
+    const raw = shot*0.9 + vsPike*1.05 + line*0.7 + raid*0.55 + screen*0.25;
+    return {raw: raw*antiCav, shot, shock, line, pike, raid, n: armyCount(a)};
+  }
+  function compositionHint(a){
+    const n = Math.max(1, armyCount(a));
+    const cav = (a.lightHorse+a.heavyHorse+a.horseBow)/n;
+    const shot = (a.crossbows+a.longbows+a.horseBow)/n;
+    const pike = a.pikemen/n;
+    if(cav>.35) return 'cavalry-heavy';
+    if(shot>.35) return 'shot-heavy';
+    if(pike>.25) return 'pike-wall';
+    return 'balanced';
+  }
+  function resolveBattle(atkA, defA, terrain, atkSmith, defSmith){
+    const A = armyPower(atkA, terrain, atkSmith);
+    const D = armyPower(defA, terrain==='hold'? 'hold' : terrain, defSmith);
+    const roll = 0.86 + Math.random()*0.28;
+    const score = A.raw * roll - D.raw;
+    const ratio = A.raw / Math.max(8, D.raw);
+    const atkLoss = clamp(ratio>1 ? 0.12+Math.random()*0.16 : 0.28+Math.random()*0.25, .08, .62);
+    const defLoss = clamp(ratio>1 ? 0.28+Math.random()*0.3 : 0.1+Math.random()*0.16, .08, .7);
+    const nextAtk = emptyArmy(), nextDef = emptyArmy();
+    for(const k of Object.keys(UNITS)){
+      nextAtk[k] = Math.max(0, Math.round(atkA[k] * (1-atkLoss) * (Math.random()*.08+0.96)));
+      nextDef[k] = Math.max(0, Math.round(defA[k] * (1-defLoss) * (Math.random()*.08+0.96)));
+    }
+    const winner = score>=0 && armyCount(nextAtk)>4 ? 'atk' : (armyCount(nextDef)>4 ? 'def' : (score>=0?'atk':'def'));
+    return {winner, nextAtk, nextDef, A, D, terrain, ratio, atkLoss, defLoss};
+  }
+  function canAfford(cost){
+    return Object.entries(cost).every(([k,v]) => (S[k]||0) >= v);
+  }
+  function pay(cost){
+    for(const [k,v] of Object.entries(cost)) S[k] -= v;
+  }
+  function recruit(unit, n){
+    if(n<=0 || !focus) return;
+    const st = S.provinces[focus];
+    if(st.owner!=='player') return;
+    if(!unitUnlocked(unit, focus)) return toast('This settlement has not unlocked that troop.');
+    n = Math.min(n, st.manpower);
+    if(n<=0) return toast('This settlement has no manpower left.');
+    const cost = {};
+    for(const [k,v] of Object.entries(UNITS[unit].cost)) cost[k] = v*n;
+    if(!canAfford(cost)) return toast('The realm cannot pay for that levy.');
+    pay(cost);
+    st.manpower -= (UNITS[unit].cost.manpower||0)*n;
+    st.army[unit] += n;
+    pushLog(`${nameOf(focus)} raised ${n} ${UNITS[unit].name}.`);
+    save(); render();
+  }
+  function startWorks(id){
+    if(!focus) return;
+    const st = S.provinces[focus];
+    const b = BUILDINGS[id];
+    const lvl = st.buildings[id]||0;
+    if(lvl>=b.max) return toast('That work is finished here.');
+    if(st.works) return toast('This settlement already has masons tasked.');
+    if(st.level < b.need[lvl]) return toast(`Needs settlement level ${b.need[lvl]}.`);
+    const gold = b.gold[lvl];
+    if(S.gold<gold) return toast('Not enough gold.');
+    S.gold -= gold;
+    st.works = {kind:'building', id, doneIn:1};
+    pushLog(`${nameOf(focus)} began ${b.name} ${lvl+1}.`);
+    save(); render();
+  }
+  function startLevel(){
+    if(!focus) return;
+    const st = S.provinces[focus];
+    if(st.level>=LEVEL_MAX) return toast('This settlement is fully raised.');
+    if(st.works) return toast('This settlement already has masons tasked.');
+    const gold = LEVEL_COST[st.level];
+    if(S.gold<gold) return toast('Not enough gold.');
+    S.gold -= gold;
+    st.works = {kind:'level', doneIn:1};
+    pushLog(`${nameOf(focus)} began a settlement raising.`);
+    save(); render();
+  }
+  function movePlayer(from, to){
+    if(from===to) return;
+    if(!neighbors(from).includes(to)) return toast('No road to that province.');
+    const src = S.provinces[from], dst = S.provinces[to];
+    if(src.owner!=='player') return toast('That host is not yours.');
+    const marching = {...src.army};
+    if(armyCount(marching)<8) return toast('Too few spears to march.');
+    if(dst.owner==='player'){
+      for(const k of Object.keys(UNITS)){dst.army[k]+=src.army[k]; src.army[k]=0}
+      selected = to;
+      pushLog(`Host joined at ${nameOf(to)}.`);
+      save(); render(); return;
+    }
+    const smith = (src.buildings.smith||0)>=1;
+    const battle = resolveBattle(marching, dst.army, terrainOf(to), smith, (dst.buildings.smith||0)>=1);
+    lastBattle = {
+      year:S.year, season:S.season, from, to,
+      attacker:'player', defender:dst.owner,
+      ...battle
+    };
+    src.army = emptyArmy();
+    if(battle.winner==='atk'){
+      const taken = lastBattle.defender;
+      dst.army = battle.nextAtk;
+      dst.owner = 'player';
+      S.authority += taken==='wild'?1:2;
+      S.gold += 12;
+      pushLog(`Took ${nameOf(to)} from ${factionName(taken)}.`);
+    } else {
+      dst.army = battle.nextDef;
+      src.army = battle.nextAtk;
+      S.authority = Math.max(0, S.authority-1);
+      pushLog(`Repulsed at ${nameOf(to)}.`);
+    }
+    rememberPlayer();
+    openView('warfare','report');
+    save(); render();
+  }
+  function rememberPlayer(){
+    const field = emptyArmy();
+    for(const id of owned('player')){
+      const a = S.provinces[id].army;
+      for(const k of Object.keys(UNITS)) field[k]+=a[k];
+    }
+    const hint = compositionHint(field);
+    for(const fid of ['crown','march','clan']){
+      if(hint==='cavalry-heavy') S.memory[fid] = fid==='clan'?'shot':'pike';
+      else if(hint==='shot-heavy') S.memory[fid] = 'raid';
+      else if(hint==='pike-wall') S.memory[fid] = 'shot';
+      else S.memory[fid] = FACTIONS[fid].doctrine;
+    }
+  }
+  function aiRecruit(fid){
+    const doctrine = S.memory[fid] || FACTIONS[fid].doctrine;
+    const homes = owned(fid);
+    if(!homes.length) return;
+    const seat = homes[0];
+    const a = S.provinces[seat].army;
+    const pick = {
+      line: 'swordsmen', raid:'lightHorse', shot:'longbows', pike:'pikemen', balanced:'militia'
+    }[doctrine] || 'militia';
+    const n = 6 + Math.floor(Math.random()*8);
+    a[pick] = (a[pick]||0) + n;
+    if(doctrine==='pike') a.militia += 4;
+    if(doctrine==='raid') a.horseBow += 2;
+  }
+  function aiMarch(fid){
+    const homes = owned(fid);
+    if(!homes.length) return;
+    const targets = [];
+    for(const h of homes){
+      for(const n of neighbors(h)){
+        const own = S.provinces[n].owner;
+        if(own!==fid) targets.push({from:h,to:n, own});
+      }
+    }
+    if(!targets.length) return;
+    targets.sort((x,y)=>{
+      const pref = (t)=> t.own==='player'?2:t.own==='wild'?3:1;
+      return pref(y)-pref(x) || armyCount(S.provinces[y.from].army)-armyCount(S.provinces[x.from].army);
+    });
+    const pick = targets[0];
+    const src = S.provinces[pick.from], dst = S.provinces[pick.to];
+    if(armyCount(src.army)<14) return;
+    if(Math.random() < (dst.owner==='player'?0.55:0.4)){
+      const battle = resolveBattle(src.army, dst.army, terrainOf(pick.to), (src.buildings.smith||0)>=1, (dst.buildings.smith||0)>=1);
+      lastBattle = {year:S.year,season:S.season,from:pick.from,to:pick.to,attacker:fid,defender:dst.owner,...battle};
+      src.army = emptyArmy();
+      if(battle.winner==='atk'){
+        dst.army = battle.nextAtk;
+        dst.owner = fid;
+        pushLog(`${factionName(fid)} took ${nameOf(pick.to)}.`);
+      } else {
+        dst.army = battle.nextDef;
+        src.army = battle.nextAtk;
+        pushLog(`${factionName(fid)} failed at ${nameOf(pick.to)}.`);
+      }
+      if(pick.to==='ashen' && S.provinces.ashen.owner!=='player'){
+        pushLog('Ashen Hold has fallen. The campaign ends.');
+      }
+    }
+  }
+  function finishWorks(id){
+    const st = S.provinces[id];
+    if(!st.works) return;
+    if(st.works.kind==='level'){
+      st.level += 1;
+      pushLog(`${nameOf(id)} is now level ${st.level}.`);
+    } else {
+      st.buildings[st.works.id] = (st.buildings[st.works.id]||0) + 1;
+      pushLog(`${nameOf(id)} finished ${BUILDINGS[st.works.id].name} ${st.buildings[st.works.id]}.`);
+    }
+    st.works = null;
+  }
+  function endSeason(){
+    if(S.provinces.ashen.owner!=='player'){toast('The hold is lost.');return}
+    for(const id of Object.keys(S.provinces)) finishWorks(id);
+    for(const id of owned('player')){
+      const prod = productionOf(id), st = S.provinces[id];
+      S.gold += prod.gold; S.food += prod.food; S.timber += prod.timber; S.iron += prod.iron;
+      st.manpower = clamp(prod.manpower, 4, 90);
+    }
+    S.gold += S.authority;
+    const before = lastBattle;
+    for(const fid of ['crown','march','clan']){
+      if(owned(fid).length){ aiRecruit(fid); aiMarch(fid); }
+    }
+    if(lastBattle && lastBattle !== before) openView('warfare','report');
+    S.season += 1;
+    if(S.season>3){S.season=0;S.year+=1}
+    S.food = Math.max(0, S.food - Math.ceil(fieldCount('player')*0.15));
+    if(S.food<=0){S.authority=Math.max(0,S.authority-2);pushLog('Famine bites. Authority slips.')}
+    pushLog(`${SEASONS[S.season]} of Year ${S.year} opens.`);
+    save(); render();
+    toast(`${SEASONS[S.season]} of Year ${S.year}.`);
+  }
+  function fieldCount(fid){
+    return owned(fid).reduce((n,id)=>n+armyCount(S.provinces[id].army),0);
+  }
+  function nameOf(id){return PROVINCES.find(p=>p.id===id).name}
+  function terrainOf(id){return PROVINCES.find(p=>p.id===id).terrain}
+  function factionName(id){return FACTIONS[id]?.name || 'Freeholders'}
+  function pushLog(m){
+    S.log.unshift({t:`Y${S.year} ${SEASONS[S.season]}`, m});
+    S.log = S.log.slice(0,24);
+  }
+  function money(n){return Math.round(n)}
+
+  function resbar(){
+    document.getElementById('resbar').innerHTML = [
+      ['Gold', S.gold],['Food',S.food],['Timber',S.timber],['Iron',S.iron],
+      ['Settlements', owned('player').length],['Authority',S.authority]
+    ].map(([k,v])=>`<div class="res"><span>${k}</span><b>${v}</b></div>`).join('');
+    document.getElementById('when').textContent = `Year ${S.year} · ${SEASONS[S.season]}`;
+    document.getElementById('realm-name').textContent = S.name;
+    const busy = owned('player').filter(id=>S.provinces[id].works).length;
+    document.getElementById('dock-copy').textContent =
+      S.provinces.ashen.owner==='player'
+        ? `${owned('player').length} settlements · host ${fieldCount('player')} · ${busy?`${busy} work${busy>1?'s':''} in progress`:'no works queued'}`
+        : 'Ashen Hold has fallen.';
+  }
+
+  function viewRealm(){
+    const att = [];
+    const busy = owned('player').filter(id=>S.provinces[id].works);
+    if(busy.length) att.push(['Works in progress', busy.map(id=>`${nameOf(id)} · ${S.provinces[id].works.kind==='level'?'raising the settlement':BUILDINGS[S.provinces[id].works.id].name}`).join(' · '), 'gold']);
+    else att.push(['Masons idle', 'Open the Map, pick a settlement, start a work there.', 'gold']);
+    const idleLevy = owned('player').filter(id=>S.provinces[id].manpower>=8);
+    if(idleLevy.length) att.push(['Levy ready', `${idleLevy.length} settlement${idleLevy.length>1?'s':''} can still raise men.`, 'good']);
+    const threats = EDGES.filter(([a,b])=>{
+      const A=S.provinces[a],B=S.provinces[b];
+      return (A.owner==='player'&&B.owner!=='player'&&B.owner!=='wild')||(B.owner==='player'&&A.owner!=='player'&&A.owner!=='wild');
+    });
+    if(threats.length) att.push(['Border heat', `${threats.length} roads touch a rival banner.`, 'bad']);
+    const last = S.log[0];
+    return `
+      <div class="split">
+        <section class="panel">
+          <div class="eyebrow">Command</div>
+          <h2>What needs a decision</h2>
+          <div class="stack">${att.map(([t,d,tone])=>`
+            <div class="card"><b class="${tone}">${t}</b><div class="tiny muted">${d}</div></div>`).join('')}
+          </div>
+          <div class="note" style="margin-top:12px">Realm, Warfare, and Factions never change. Warfare is always Map, Settlement, Field report. Settlement then opens its own row: Overview, Works, Levy.</div>
+          <div class="row wrap" style="margin-top:12px">
+            <button class="btn small" data-act="open" data-group="warfare" data-sub="map">Open Map</button>
+            <button class="btn small" data-act="open" data-group="realm" data-sub="account">Account</button>
+          </div>
+        </section>
+        <section class="panel">
+          <div class="eyebrow">Season sheet</div>
+          <h2>${SEASONS[S.season]} · Year ${S.year}</h2>
+          <div class="stack">
+            <div class="card row"><span>Provinces</span><b>${owned('player').length}</b></div>
+            <div class="card row"><span>Field strength</span><b>${fieldCount('player')}</b></div>
+            <div class="card row"><span>Last word</span><b class="tiny">${last?last.m:'—'}</b></div>
+          </div>
+          <button class="btn small" style="margin-top:12px" data-act="open" data-group="realm" data-sub="ledger">Open ledger</button>
+        </section>
+      </div>`;
+  }
+  function viewLedger(){
+    return `
+      <section class="panel">
+        <div class="eyebrow">Season ledger</div>
+        <h2>What already happened</h2>
+        <p class="tiny muted">This is its own screen so Overview stays short.</p>
+        <div class="log">${S.log.map(x=>`<article><b>${x.t}</b> · ${x.m}</article>`).join('')||'<div class="empty">Nothing written yet.</div>'}</div>
+      </section>`;
+  }
+  function viewAccount(){
+    const who = account.profile;
+    return `
+      <div class="split">
+        <section class="panel">
+          <div class="eyebrow">This device</div>
+          <h2>${who ? 'Signed in' : 'Local campaign'}</h2>
+          <p class="tiny muted">The game always writes to this browser. Google is the cloud copy so another machine can pick it up without downloading a file.</p>
+          <div class="card">${who
+            ? `<b>${esc(who.name||'Google account')}</b><div class="tiny muted">${esc(who.email||'')}</div><div class="tiny muted" style="margin-top:6px">${account.lastCloud?'Last cloud write '+new Date(account.lastCloud).toLocaleString():'Cloud file '+(account.fileId?'ready':'will be created on save')}</div>`
+            : `<b>Playing as a guest on this browser.</b><div class="tiny muted">Sign in to keep the campaign on your Google account.</div>`}
+          </div>
+          <div class="row wrap" style="margin-top:12px">
+            ${who
+              ? `<button class="btn" data-act="cloud-push" ${account.busy?'disabled':''}>Save to Google</button>
+                 <button class="btn" data-act="cloud-pull" ${account.busy?'disabled':''}>Load from Google</button>
+                 <button class="btn danger" data-act="google-out">Sign out</button>`
+              : `<button class="btn primary" data-act="google-in">Sign in with Google</button>`}
+          </div>
+        </section>
+        <section class="panel">
+          <div class="eyebrow">One-time setup</div>
+          <h2>Google Client ID</h2>
+          <p class="tiny muted">Google will not let a game sign people in without a Client ID from the person shipping it. Create one in Google Cloud, enable the Drive API, and add this page’s origin under Authorized JavaScript origins.</p>
+          <label class="tiny muted">Web Client ID
+            <input id="google-client-id" value="${esc(account.clientId)}" placeholder="123-abc.apps.googleusercontent.com" autocomplete="off">
+          </label>
+          <button class="btn small" style="margin-top:8px" data-act="save-client">Save Client ID</button>
+          <div class="note" style="margin-top:12px">
+            1. Google Cloud Console → APIs &amp; Services → Credentials<br>
+            2. Create OAuth client → Web application<br>
+            3. Enable Google Drive API<br>
+            4. Scope used: Drive app data only. The save sits in hidden app data, not your visible Drive files.
+          </div>
+        </section>
+      </div>`;
+  }
+  function esc(s){return String(s||'').replace(/[&<>"']/g,c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]))}
+
+  function settlementHead(){
+    const st = S.provinces[focus];
+    return `<div class="row wrap" style="margin-bottom:10px">
+      <div><div class="eyebrow">${terrainOf(focus)} · level ${st.level}</div><h2 style="margin:0">${nameOf(focus)}</h2></div>
+      <button class="btn small" data-act="open" data-group="warfare" data-sub="map">Map</button>
+    </div>`;
+  }
+  function viewSettlement(){
+    if(!focus || S.provinces[focus].owner!=='player'){
+      return `<section class="panel">
+        <div class="eyebrow">Settlement</div>
+        <h2>No settlement selected</h2>
+        <p class="muted">The Warfare tabs stay the same. Pick a banner you own on the Map, then this screen grows its own subtabs: Overview, Works, Levy.</p>
+        <button class="btn primary" data-act="open" data-group="warfare" data-sub="map">Open Map</button>
+      </section>`;
+    }
+    const st = S.provinces[focus], prod = productionOf(focus);
+    return `
+      <div class="split">
+        <section class="panel">
+          ${settlementHead()}
+          <p class="tiny muted">This settlement only. Other holds wait on the Map.</p>
+          <div class="grid2">
+            <div class="card"><span class="tiny muted">Level</span><b>${st.level}/${LEVEL_MAX}</b></div>
+            <div class="card"><span class="tiny muted">Garrison</span><b>${armyCount(st.army)}</b></div>
+            <div class="card"><span class="tiny muted">Manpower</span><b>${st.manpower}</b></div>
+            <div class="card"><span class="tiny muted">Works</span><b>${st.works? (st.works.kind==='level'?'Raising level':BUILDINGS[st.works.id].name) : 'Idle'}</b></div>
+          </div>
+          <div class="note" style="margin-top:12px">Each harvest this place yields ${prod.gold} gold, ${prod.food} food, ${prod.timber} timber, ${prod.iron} iron.</div>
+        </section>
+        <section class="panel">
+          <div class="eyebrow">Garrison</div>
+          <h2>Who stands here</h2>
+          <div class="stack">${Object.entries(st.army).filter(([,n])=>n).map(([k,n])=>`<div class="row"><span>${UNITS[k].name}</span><b>${n}</b></div>`).join('')||'<div class="empty">No garrison.</div>'}</div>
+          <div class="row wrap" style="margin-top:12px">
+            <button class="btn" data-act="settle" data-settle="works">Works</button>
+            <button class="btn primary" data-act="settle" data-settle="levy">Levy</button>
+          </div>
+        </section>
+      </div>`;
+  }
+  function viewHold(){
+    if(!focus) return viewSettlement();
+    const st = S.provinces[focus];
+    const nextLv = st.level>=LEVEL_MAX?null:LEVEL_COST[st.level];
+    return `
+      <div class="split">
+        <section class="panel">
+          ${settlementHead()}
+          <p class="tiny muted">One work in this settlement per season. Level gates the better buildings.</p>
+          <div class="card" style="margin-bottom:10px">
+            <div class="row"><h3>Settlement level</h3><span class="chip on">${st.level}/${LEVEL_MAX}</span></div>
+            <div class="bar"><i style="width:${st.level/LEVEL_MAX*100}%"></i></div>
+            <button class="btn small" style="margin-top:8px" data-act="level" ${st.works||nextLv==null?'disabled':''}>
+              ${st.level>=LEVEL_MAX?'Highest level':st.works?'Masons tasked':`Raise to ${st.level+1} · ${nextLv} gold`}
+            </button>
+          </div>
+          <div class="grid2">${Object.entries(BUILDINGS).map(([id,b])=>{
+            const lvl=st.buildings[id]||0, max=b.max, next=lvl>=max?null:b.gold[lvl];
+            const gated = next!=null && st.level < b.need[lvl];
+            return `<div class="card">
+              <div class="row"><h3>${b.name}</h3><span class="chip on">${lvl}/${max}</span></div>
+              <p class="tiny muted">${b.desc}${gated?` · needs level ${b.need[lvl]}`:''}</p>
+              <div class="bar"><i style="width:${lvl/max*100}%"></i></div>
+              <button class="btn small" style="margin-top:8px" data-act="build" data-id="${id}" ${st.works||next==null||gated?'disabled':''}>
+                ${lvl>=max?'Complete':st.works?'Masons tasked':gated?`Level ${b.need[lvl]}`: `Raise · ${next} gold`}
+              </button>
+            </div>`}).join('')}
+          </div>
+        </section>
+        <section class="panel">
+          <div class="eyebrow">Unlocks here</div>
+          <h2>What this settlement can raise</h2>
+          <div class="stack">${Object.entries(UNITS).map(([k,u])=>{
+            const ready = unitUnlocked(k, focus);
+            const need = u.unlock ? `${u.unlock.b} ${u.unlock.n} · lv ${u.unlock.lv}` : 'Always';
+            return `<div class="card row wrap">
+              <div><b>${u.name}</b><div class="tiny muted">${u.role} · ${need}</div></div>
+              <span class="chip ${ready?'on':''}">${ready?'Ready':'Locked'}</span>
+            </div>`}).join('')}
+          </div>
+        </section>
+      </div>`;
+  }
+  function viewHost(){
+    if(!focus) return viewSettlement();
+    const st = S.provinces[focus];
+    return `
+      <div class="split">
+        <section class="panel">
+          ${settlementHead()}
+          <p class="tiny muted">Men raise into this garrison. Manpower is local. Gold and grain come from the realm.</p>
+          <div class="card row" style="margin-bottom:10px"><span>Local manpower</span><b>${st.manpower}</b></div>
+          <div class="stack">${Object.entries(UNITS).map(([k,u])=>`
+            <div class="card unit-row">
+              <div><b>${u.name}</b><div class="tiny muted">${u.role} · ${st.army[k]} here</div></div>
+              <div class="tiny muted">${u.cost.gold}g ${u.cost.food||0}f ${u.cost.iron||0}i</div>
+              <div class="step">
+                <button class="btn small" data-act="recruit" data-id="${k}" data-n="5" ${unitUnlocked(k,focus)?'':'disabled'}>+5</button>
+                <button class="btn small" data-act="recruit" data-id="${k}" data-n="10" ${unitUnlocked(k,focus)?'':'disabled'}>+10</button>
+              </div>
+            </div>`).join('')}
+        </section>
+        <section class="panel">
+          <div class="eyebrow">This garrison</div>
+          <h2>${compositionHint(st.army).replace('-',' ')}</h2>
+          ${Object.keys(UNITS).map(k=>{
+            const n=st.army[k], max=Math.max(1,armyCount(st.army));
+            return `<div class="tiny">${UNITS[k].name}<div class="bar"><i style="width:${n/max*100}%"></i></div></div>`;
+          }).join('')}
+          <div class="note" style="margin-top:14px">A mill town with a range is not the same as Ashen Hold with stables. Develop the place you intend to fight from.</div>
+        </section>
+      </div>`;
+  }
+
+  function viewMap(){
+    const sel = PROVINCES.find(p=>p.id===selected) || PROVINCES[0];
+    const st = S.provinces[sel.id];
+    const links = EDGES.map(([a,b])=>{
+      const A=PROVINCES.find(p=>p.id===a), B=PROVINCES.find(p=>p.id===b);
+      return `<line class="link" x1="${A.x}" y1="${A.y}" x2="${B.x}" y2="${B.y}"/>`;
+    }).join('');
+    const nodes = PROVINCES.map(p=>{
+      const own = S.provinces[p.id].owner;
+      return `<g class="node ${p.id===selected?'selected':''}" data-act="select" data-id="${p.id}">
+        <circle class="owner-${own}" cx="${p.x}" cy="${p.y}" r="${p.id===selected?16:13}"/>
+        <text x="${p.x}" y="${p.y+28}" text-anchor="middle">${p.name}</text>
+      </g>`;
+    }).join('');
+    const canMarch = S.provinces[sel.id].owner!=='player' && neighbors(sel.id).some(n=>S.provinces[n].owner==='player');
+    const from = neighbors(sel.id).find(n=>S.provinces[n].owner==='player' && armyCount(S.provinces[n].army)>=8) || (st.owner==='player'?sel.id:null);
+    return `
+      <div class="split">
+        <section class="panel" style="padding:0">
+          <div class="mapwrap">
+            <svg class="map" viewBox="0 0 640 500">${links}${nodes}</svg>
+          </div>
+        </section>
+        <section class="panel">
+          <div class="eyebrow">${st.owner==='player'?'Your land':factionName(st.owner)}</div>
+          <h2>${sel.name}</h2>
+          <div class="tiny muted">${sel.terrain} ground · garrison ${armyCount(st.army)}</div>
+          <div class="stack" style="margin-top:10px">
+            ${Object.entries(st.army).filter(([,n])=>n).map(([k,n])=>`<div class="row tiny"><span>${UNITS[k].name}</span><b>${n}</b></div>`).join('')||'<div class="empty">No garrison worth naming.</div>'}
+          </div>
+          <div class="stack" style="margin-top:12px">
+            ${st.owner==='player'
+              ? `<button class="btn primary" data-act="enter" data-id="${sel.id}">Work this settlement</button>
+                 <div class="tiny muted">Level ${st.level} · ${armyCount(st.army)} in garrison · ${st.manpower} manpower</div>`
+              : `<button class="btn primary" data-act="march" data-from="${from||''}" data-to="${sel.id}" ${from&&canMarch?'':'disabled'}>${from?'March from '+nameOf(from):'Move a host onto a bordering road'}</button>`}
+          </div>
+          <p class="tiny muted" style="margin-top:10px">Click a banner you own to open that settlement. Map is how you leave it.</p>
+        </section>
+      </div>`;
+  }
+
+  function viewWar(){
+    const b = lastBattle;
+    return b ? `
+      <div class="split even">
+        <section class="panel">
+          <div class="eyebrow">After action</div>
+          <h2>${nameOf(b.to)}</h2>
+          <p>${factionName(b.attacker)} struck ${factionName(b.defender)} on ${b.terrain} ground.</p>
+          <div class="card"><b class="${b.winner==='atk'?'good':'bad'}">${b.winner==='atk'?'Attacker held the field.':'Defender held the field.'}</b>
+            <div class="tiny muted">Force ratio ${b.ratio.toFixed(2)} · attacker loss ${Math.round(b.atkLoss*100)}% · defender loss ${Math.round(b.defLoss*100)}%</div>
+          </div>
+        </section>
+        <section class="panel">
+          <div class="eyebrow">What the numbers said</div>
+          <h3>Attacker</h3>
+          <p class="tiny muted">Shot ${Math.round(b.A.shot)} · Shock ${Math.round(b.A.shock)} · Line ${Math.round(b.A.line)} · Pikes ${Math.round(b.A.pike)}</p>
+          <h3>Defender</h3>
+          <p class="tiny muted">Shot ${Math.round(b.D.shot)} · Shock ${Math.round(b.D.shock)} · Line ${Math.round(b.D.line)} · Pikes ${Math.round(b.D.pike)}</p>
+          <div class="note">Rivals remember the mix you keep putting on the field.</div>
+        </section>
+      </div>` : `
+      <section class="panel">
+        <div class="eyebrow">War room</div>
+        <h2>No battle this season</h2>
+        <p class="muted">March from Warfare → Map. This report is a separate subtab so it never stacks under the map.</p>
+        <div class="empty">Open Map, pick a bordering province, march the host.</div>
+        <button class="btn" style="margin-top:12px" data-act="open" data-group="warfare" data-sub="map">Go to Map</button>
+      </section>`;
+  }
+
+  function viewFactions(){
+    return `
+      <div class="grid3">${['crown','march','clan'].map(fid=>{
+        const f=FACTIONS[fid], lands=owned(fid);
+        return `<section class="panel">
+          <div class="eyebrow">${lands.length?'Active':'Broken'}</div>
+          <h2>${f.name}</h2>
+          <p class="tiny muted">Doctrine now: <b class="gold">${S.memory[fid]}</b></p>
+          <div class="tiny muted">${lands.length} provinces · host ${fieldCount(fid)}</div>
+          <div class="note" style="margin-top:10px">${
+            S.memory[fid]==='pike'?'They are raising pikes because your horse is loud.':
+            S.memory[fid]==='shot'?'They want distance. Hills and bows.':
+            S.memory[fid]==='raid'?'They will not give you a fair line fight.':
+            'They are playing their opening personality.'
+          }</div>
+        </section>`}).join('')}
+      </div>`;
+  }
+
+  function renderNav(){
+    document.getElementById('tabs').innerHTML = Object.entries(NAV).map(([id,g])=>
+      `<button class="tab" data-act="open" data-group="${id}" aria-selected="${group===id?'true':'false'}">${g.label}</button>`
+    ).join('');
+    const g = NAV[group];
+    const subs = currentSubs();
+    document.getElementById('subs').innerHTML =
+      `<span class="subs-label">${g.label}</span>` +
+      Object.entries(subs).map(([id,label])=>
+        `<button class="subtab" data-act="open" data-group="${group}" data-sub="${id}" aria-selected="${sub[group]===id?'true':'false'}">${label}</button>`
+      ).join('');
+    const nest = document.getElementById('settle-subs');
+    const showNest = group==='warfare' && sub.warfare==='settlement';
+    nest.classList.toggle('hidden', !showNest);
+    if(showNest){
+      const title = focus && S.provinces[focus]?.owner==='player' ? nameOf(focus) : 'Settlement';
+      nest.innerHTML =
+        `<span class="subs-label">${title}</span>` +
+        Object.entries(NAV.SETTLEMENT).map(([id,label])=>
+          `<button class="subtab" data-act="settle" data-settle="${id}" aria-selected="${settleTab===id?'true':'false'}" ${focus?'':'disabled'}>${label}</button>`
+        ).join('');
+    }
+  }
+  function renderStage(){
+    const screen = sub[group];
+    let draw;
+    if(group==='warfare' && screen==='settlement'){
+      draw = {overview:viewSettlement, works:viewHold, levy:viewHost}[settleTab] || viewSettlement;
+    } else {
+      draw = {
+        overview: viewRealm,
+        ledger: viewLedger,
+        map: viewMap,
+        settlement: viewSettlement,
+        report: viewWar,
+        houses: viewFactions,
+        account: viewAccount
+      }[screen];
+    }
+    document.getElementById('stage').innerHTML = draw ? draw() : '<section class="panel"><h2>Missing screen</h2></section>';
+  }
+  function render(){
+    resbar();
+    renderNav();
+    renderStage();
+  }
+
+  document.getElementById('app').addEventListener('click', e=>{
+    const btn = e.target.closest('[data-act],.tab,.subtab,.node');
+    if(!btn) return;
+    const act = btn.dataset.act;
+    if(act==='open'){
+      openView(btn.dataset.group, btn.dataset.sub);
+      render(); return;
+    }
+    if(act==='settle'){
+      if(!focus){toast('Pick a settlement on the Map first.');return}
+      openView('warfare','settlement', btn.dataset.settle);
+      render(); return;
+    }
+    if(act==='select' || btn.classList.contains('node')){
+      const id = btn.dataset.id;
+      if(S.provinces[id].owner==='player'){ enterSettlement(id); render(); return; }
+      selected = id; openView('warfare','map'); render(); return;
+    }
+    if(act==='enter'){ enterSettlement(btn.dataset.id); render(); return; }
+    if(act==='recruit') recruit(btn.dataset.id, Number(btn.dataset.n));
+    if(act==='build') startWorks(btn.dataset.id);
+    if(act==='level') startLevel();
+    if(act==='march') movePlayer(btn.dataset.from, btn.dataset.to);
+    if(act==='end') endSeason();
+    if(act==='save'){save();toast(account.token?'Saved here and queued to Google.':'Campaign saved in this browser.')}
+    if(act==='google-in') googleSignIn();
+    if(act==='google-out') googleSignOut();
+    if(act==='save-client') saveClientId();
+    if(act==='cloud-push'){
+      if(!account.token){toast('Sign in first.');return}
+      cloudPush().then(()=>{render();toast('Cloud campaign updated.')}).catch(err=>toast(err.message));
+    }
+    if(act==='cloud-pull'){
+      if(!account.token){toast('Sign in first.');return}
+      cloudPull().then(remote=>{
+        if(!remote){toast('No cloud campaign yet.');return}
+        if(!confirm('Replace this device’s campaign with the Google copy?')) return;
+        S = remote; lastBattle=null; focus=null; selected='ashen'; save(); render();
+        toast('Loaded from Google.');
+      }).catch(err=>toast(err.message));
+    }
+    if(act==='new'){
+      if(confirm('Burn this campaign and start another?')){S=newGame();lastBattle=null;selected='ashen';openView('realm','overview');save();render();toast('A new scatter of holds.')}
+    }
+    if(act==='rename'){
+      const n = prompt('Realm name', S.name);
+      if(n && n.trim()){S.name=n.trim().slice(0,40);save();render()}
+    }
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>
