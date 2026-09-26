@@ -133,11 +133,13 @@
   }
   .mapwrap{position:relative;height:min(64vh,680px);background:#1a2a32;border:1px solid #6a5a3c;box-shadow:inset 0 0 0 4px #cbb58a,inset 0 0 0 6px #6a5a3c}
   svg.map{width:100%;height:100%;display:block}
-  .map-screen{margin:-14px -18px 0}
+  .map-screen{margin:0}
   .mapframe{
     background:#1a2a32;
     border:1px solid #6a5a3c;
-    box-shadow:inset 0 0 0 5px #cbb58a,inset 0 0 0 7px #6a5a3c
+    box-shadow:inset 0 0 0 5px #cbb58a,inset 0 0 0 7px #6a5a3c;
+    max-width:min(100%,1120px);
+    margin:0 auto
   }
   .mapframe .map-plaque{
     display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px 16px;
@@ -148,13 +150,19 @@
   }
   .mapframe .map-plaque h2{margin:0;font-size:1.2rem}
   .mapframe .map-levy{display:flex;flex-wrap:wrap;gap:6px 12px;max-width:42vw}
-  .mapframe .mapwrap{height:min(74vh,820px);border:0;box-shadow:none;margin:0 7px 7px}
+  .mapframe .mapwrap{
+    height:auto;
+    aspect-ratio: 1080 / 768;
+    max-height:min(58vh,560px);
+    width:100%;
+    border:0;box-shadow:none;margin:0 7px 7px
+  }
   @media (max-width: 1100px){
-    .mapframe .mapwrap{height:min(58vh,560px)}
     .mapframe .map-levy{max-width:100%}
+    .mapframe .mapwrap{max-height:min(52vh,480px)}
   }
   @media (max-width: 720px){
-    .mapframe .mapwrap{height:min(48vh,420px)}
+    .mapframe .mapwrap{max-height:min(44vh,360px)}
   }
   .node{cursor:pointer}
   .node text{pointer-events:none}
