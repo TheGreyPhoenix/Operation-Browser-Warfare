@@ -133,6 +133,29 @@
   }
   .mapwrap{position:relative;height:min(64vh,680px);background:#1a2a32;border:1px solid #6a5a3c;box-shadow:inset 0 0 0 4px #cbb58a,inset 0 0 0 6px #6a5a3c}
   svg.map{width:100%;height:100%;display:block}
+  .map-screen{margin:-14px -18px 0}
+  .mapframe{
+    background:#1a2a32;
+    border:1px solid #6a5a3c;
+    box-shadow:inset 0 0 0 5px #cbb58a,inset 0 0 0 7px #6a5a3c
+  }
+  .mapframe .map-plaque{
+    display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px 16px;
+    margin:7px 7px 0;padding:10px 14px;
+    background:linear-gradient(#2c261cee,#1b1812f2);
+    border:1px solid #6a5a3c;border-bottom:0;
+    color:var(--ink)
+  }
+  .mapframe .map-plaque h2{margin:0;font-size:1.2rem}
+  .mapframe .map-levy{display:flex;flex-wrap:wrap;gap:6px 12px;max-width:42vw}
+  .mapframe .mapwrap{height:min(74vh,820px);border:0;box-shadow:none;margin:0 7px 7px}
+  @media (max-width: 1100px){
+    .mapframe .mapwrap{height:min(58vh,560px)}
+    .mapframe .map-levy{max-width:100%}
+  }
+  @media (max-width: 720px){
+    .mapframe .mapwrap{height:min(48vh,420px)}
+  }
   .node{cursor:pointer}
   .node text{pointer-events:none}
   .unit-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px 14px;align-items:start}
@@ -1287,8 +1310,10 @@
         <text x="${p.x}" y="${p.y+36}" text-anchor="middle" font-family="Georgia,Times,serif" font-size="20" font-weight="700" fill="#24180f" stroke="#f3e6c4" stroke-width="5" paint-order="stroke">${label}</text>
       </g>`;
     }).join('');
-    return `<svg class="map" viewBox="${MAP_VIEW}">
-      <image href="${MAP_SRC}" x="0" y="0" width="${MAP_W}" height="${MAP_H}" preserveAspectRatio="xMidYMid meet"/>
+    const wide = opts.fill && window.innerWidth >= 1100 && window.innerHeight >= 700;
+    const fit = wide ? 'xMidYMid slice' : 'xMidYMid meet';
+    return `<svg class="map" viewBox="${MAP_VIEW}" preserveAspectRatio="${fit}">
+      <image href="${MAP_SRC}" x="0" y="0" width="${MAP_W}" height="${MAP_H}" preserveAspectRatio="${fit}"/>
       ${roads}${sites}
     </svg>`;
   }
@@ -1299,33 +1324,32 @@
     for(const p of PROVINCES) owners[p.id] = S.provinces[p.id].owner;
     const canMarch = S.provinces[sel.id].owner!=='player' && neighbors(sel.id).some(n=>S.provinces[n].owner==='player');
     const from = neighbors(sel.id).find(n=>S.provinces[n].owner==='player' && armyCount(S.provinces[n].army)>=8) || (st.owner==='player'?sel.id:null);
+    const troops = Object.entries(st.army).filter(([,n])=>n).map(([k,n])=>`<span class="tiny">${UNITS[k].name} <b>${n}</b></span>`).join('') || '<span class="tiny muted">No garrison worth naming.</span>';
+    const action = st.owner==='player'
+      ? `<button class="btn primary" data-act="enter" data-id="${sel.id}">Work this settlement</button>
+         <div class="tiny muted">Level ${st.level} · ${st.manpower} manpower</div>`
+      : `<button class="btn primary" data-act="march" data-from="${from||''}" data-to="${sel.id}" ${from&&canMarch&&(st.owner==='wild'||canStrike(st.owner))?'':'disabled'}>${
+          st.owner!=='wild'&&stance(st.owner)==='ally'?'Allied — break the pact first':
+          st.owner!=='wild'&&!canStrike(st.owner)?'Declare war first':
+          from?'March from '+nameOf(from):'Move a host onto a bordering road'
+        }</button>
+         ${st.owner!=='wild'&&st.owner!=='player'?`<div class="tiny muted">Stance: ${stance(st.owner)}</div>`:''}`;
     return `
-      <div class="split">
-        <section class="panel" style="padding:0">
+      <div class="map-screen">
+        <div class="mapframe">
+          <div class="map-plaque">
+            <div>
+              <div class="eyebrow">${st.owner==='player'?'Your land':factionName(st.owner)}</div>
+              <h2>${nameOf(sel.id)}</h2>
+              <div class="tiny muted">${sel.terrain} ground · garrison ${armyCount(st.army)}</div>
+            </div>
+            <div class="map-levy">${troops}</div>
+            <div class="stack">${action}</div>
+          </div>
           <div class="mapwrap">
-            ${mapSvg({act:'select', selected, owners, labels:S.labels})}
+            ${mapSvg({act:'select', selected, owners, labels:S.labels, fill:true})}
           </div>
-        </section>
-        <section class="panel">
-          <div class="eyebrow">${st.owner==='player'?'Your land':factionName(st.owner)}</div>
-          <h2>${nameOf(sel.id)}</h2>
-          <div class="tiny muted">${sel.terrain} ground · garrison ${armyCount(st.army)}</div>
-          <div class="stack" style="margin-top:10px">
-            ${Object.entries(st.army).filter(([,n])=>n).map(([k,n])=>`<div class="row tiny"><span>${UNITS[k].name}</span><b>${n}</b></div>`).join('')||'<div class="empty">No garrison worth naming.</div>'}
-          </div>
-          <div class="stack" style="margin-top:12px">
-            ${st.owner==='player'
-              ? `<button class="btn primary" data-act="enter" data-id="${sel.id}">Work this settlement</button>
-                 <div class="tiny muted">Level ${st.level} · ${armyCount(st.army)} in garrison · ${st.manpower} manpower</div>`
-              : `<button class="btn primary" data-act="march" data-from="${from||''}" data-to="${sel.id}" ${from&&canMarch&&(st.owner==='wild'||canStrike(st.owner))?'':'disabled'}>${
-                  st.owner!=='wild'&&stance(st.owner)==='ally'?'Allied — break the pact first':
-                  st.owner!=='wild'&&!canStrike(st.owner)?'Declare war first':
-                  from?'March from '+nameOf(from):'Move a host onto a bordering road'
-                }</button>
-                 ${st.owner!=='wild'&&st.owner!=='player'?`<div class="tiny muted">Stance: ${stance(st.owner)}</div>`:''}`}
-          </div>
-          <p class="tiny muted" style="margin-top:10px">Click a banner you own to open that settlement. Map is how you leave it.</p>
-        </section>
+        </div>
       </div>`;
   }
 
