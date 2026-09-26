@@ -173,6 +173,20 @@
   .levy-cost{display:grid;gap:4px;font-size:12px;color:var(--muted)}
   .levy-cost b{color:var(--ink);font-weight:750}
   .cost-chip{display:inline-block;border:1px solid var(--line);background:#161b25;padding:2px 7px;margin:2px 4px 0 0;color:var(--gold2)}
+  #event{
+    position:fixed;inset:0;z-index:32;display:flex;align-items:center;justify-content:center;
+    background:#0b0e14cc;padding:18px
+  }
+  #event.hidden{display:none}
+  #event .sheet{
+    width:min(520px,94vw);max-height:min(80vh,640px);overflow:auto;
+    background:#1c2230;border:1px solid var(--gold);padding:18px 18px 14px;
+    box-shadow:0 18px 50px #000a
+  }
+  #event .sheet h3{margin:0 0 8px;font-size:1.2rem}
+  #event .sheet p{margin:0 0 12px;color:var(--muted);font-size:14px}
+  #event .choices{display:flex;flex-direction:column;gap:8px}
+  #event .choices .btn{text-align:left;width:100%}
   #tutor{
     position:fixed;right:16px;top:16px;z-index:30;width:min(92vw,360px);
     background:#1c2230;border:1px solid var(--gold);padding:14px 14px 12px;
@@ -313,6 +327,7 @@
 </div>
 <div id="setup" class="hidden"></div>
 <div id="tutor" class="hidden"></div>
+<div id="event" class="hidden"></div>
 <div id="toast" class="toast hidden"></div>
 <script>
 (() => {
@@ -425,6 +440,27 @@
     pike: {title:'Pike', mean:'They are raising a hedge of pikes. Cavalry dies on it. Slow on the march, ugly to charge.'},
     balanced: {title:'Balanced', mean:'No single trick. Militia and a mix of whatever the hall can raise. They change if you show them a reason.'}
   };
+
+  const VOICE = {
+    crown:{gift:'The Court records the gift in a thin book.', refuse:'The High Court does not bind with halls that have not yet knelt.', accept:'A seal of the Court is pressed. Conduct yourself as if watched.', war:'The herald reads your name among the faithless.', peaceYes:'The Court will sheathe the writ. Do not make us take it out twice.', peaceNo:'The slight is still on the roll.', break:'Court memory is long. The pact is ash.', glove:'A glove with a gold thread lands on your table.'},
+    march:{gift:'The Marcher takes the gold and weighs your arm, not the purse.', refuse:'Ride a harder border before you ask for our stirrup.', accept:'We ride your marches as if they were ours. Do the same.', war:'Good. The road is shorter when it is honest.', peaceYes:'Enough blood for one season. Keep your watchfires.', peaceNo:'The border is not done with you.', break:'Pacts last as long as the watch does.', glove:'A rider nails a challenge to your gate.'},
+    clan:{gift:'They drink it. They do not thank you twice.', refuse:'The hill does not marry the valley on a first hello.', accept:'Share salt and a raid. Betray that and the glen remembers.', war:'At last a reason to come down.', peaceYes:'We will sit. The next slight starts the count again.', peaceNo:'Someone still owes a life.', break:'The glen shrugs. You were useful.', glove:'A horn from the ridge. They are coming.'},
+    amber:{gift:'Amber smiles with its teeth. The ledger is updated.', refuse:'Show us a fuller wagon. Then we talk banners.', accept:'Trade and peace, written twice. Break one and both die.', war:'War is a poor customer. You have chosen it.', peaceYes:'The stalls reopen if the road is quiet.', peaceNo:'Accounts remain open.', break:'The League tears the paper. Prices will rise.', glove:'A sealed bill naming you debtor and foe.'},
+    salt:{gift:'Salt takes coin the way a quay takes a rope.', refuse:'Open water first. Then a pact.', accept:'Your ships will have our weather-word.', war:'Then the harbors close.', peaceYes:'Tide goes out. Let it.', peaceNo:'A hull still burns in our memory.', break:'The Brotherhood cuts the line.', glove:'A black sail on your river.'},
+    fen:{gift:'They take it into the mist. You hear nothing back for a week.', refuse:'The marsh does not sign what it cannot see.', accept:'Walk our dikes as a friend. Stray and the mud keeps you.', war:'The reeds will hide us. You will learn that.', peaceYes:'The water stills. For a season.', peaceNo:'The last fire still smokes.', break:'They vanish from the road.', glove:'A drowned banner left on your bank.'},
+    glass:{gift:'They hold the coin to the light before they nod.', refuse:'The cut is uneven. We will not set it.', accept:'A clean join. Do not cloud it.', war:'Then we cut away the flaw.', peaceYes:'The pane is reset. Fragile.', peaceNo:'The crack still shows.', break:'Glass remembers every tap.', glove:'A sliver of their seal, snapped in two.'},
+    thorn:{gift:'Thornwood takes gifts like bait.', refuse:'We do not bind with hands that still smell of knives.', accept:'Walk the wood. Do not draw steel in it.', war:'Good. The thicket has been hungry.', peaceYes:'We will let the path grow over. Slowly.', peaceNo:'Someone still bleeds in the leaves.', break:'The Circle unpicks the thorn from your cloak.', glove:'A briar wreath on your door.'},
+    pale:{gift:'The Pale Banner bows. Courtesy is a kind of oath.', refuse:'An oath is not a favor. You have not earned one.', accept:'We swear. We keep it. See that you do.', war:'Then the banner goes dark.', peaceYes:'We sheathe as promised.', peaceNo:'Honor is not finished with this.', break:'You taught us what your word is worth.', glove:'A pale strip of cloth, torn.'},
+    iron:{gift:'Iron nods once. That is the speech.', refuse:'We do not weld to soft metal.', accept:'The join is made. It will not be unmade lightly.', war:'Named. Now we work.', peaceYes:'The hammer rests. The ingot remains.', peaceNo:'The work is unfinished.', break:'Covenant broken is iron wasted.', glove:'A cold ring of iron on your table.'},
+    abbey:{gift:'The Abbey blesses the gift and hides it in the undercroft.', refuse:'Peace is a habit. You have not kept it long enough.', accept:'Walk gently. The Abbey will speak well of you.', war:'Then we pray for the dead you will make.', peaceYes:'A truce is a kind of prayer. Keep it.', peaceNo:'The chapel still lists your name.', break:'The bells do not ring for you.', glove:'A letter in a grey hand. War, with regret.'},
+    wolf:{gift:'The moot sniffs the bag. Meat would have been better.', refuse:'Come back when your jaw is the larger one.', accept:'Run with the pack. Lag and we eat first.', war:'The hunt has a name now.', peaceYes:'We circle off. We do not sleep.', peaceNo:'The scent is still fresh.', break:'The pack moves on.', glove:'A tooth on a string.'},
+    dune:{gift:'The Watch takes it and looks past you at the horizon.', refuse:'The dunes do not sign in a hurry.', accept:'Keep the signal fires. We will answer.', war:'Then the waste is your road.', peaceYes:'Dust settles. Watch remains.', peaceNo:'A fire still shows on our rim.', break:'The Watch turns its back.', glove:'A dry standard planted in your yard.'},
+    wain:{gift:'Red Wain toasts you and pockets the rest.', refuse:'Wagons do not hitch to a light load.', accept:'Your road is our road while the wheels agree.', war:'Then the wagons go around you. Or over.', peaceYes:'We water the horses and leave the feud.', peaceNo:'A wagon burned is not forgotten.', break:'The wain turns off your track.', glove:'A red wheel chalked on your gate.'},
+    reed:{gift:'Reedmen take it into the boats. They smile too much.', refuse:'The water is too high for promises.', accept:'We will pole you through. Do not stand up.', war:'Then the channels close.', peaceYes:'We hide the poles. For now.', peaceNo:'Someone still sits in the wet dark.', break:'The boats are gone at dawn.', glove:'A wet reed across your threshold.'}
+  };
+  function voiceOf(fid, key){
+    return (VOICE[fid] && VOICE[fid][key]) || 'They have written.';
+  }
   const HOUSE = {
     crown:{temper:'proud',    line:'The High Court keeps score of who kneels.', gift:0.7, pride:8, warlike:4, greedy:5, honor:6},
     march:{temper:'martial',  line:'Marcher Lords respect a hard ride and a kept border.', gift:0.5, pride:6, warlike:7, greedy:3, honor:6},
@@ -509,7 +545,7 @@
     realm: {
       label: 'Realm',
       hint: 'The season and the ledger',
-      subs: {overview:'Overview', ledger:'Ledger', account:'Account'}
+      subs: {overview:'Overview', hall:'Captains', ledger:'Ledger', account:'Account'}
     },
     warfare: {
       label: 'Warfare',
@@ -585,7 +621,7 @@
     if(doc==='pike') buildings.barracks = 1;
     if(p.terrain==='hill') buildings.range = Math.max(buildings.range,1);
     if(p.terrain==='river' || p.terrain==='open') buildings.granary = 1;
-    return {owner, army: seedArmy(owner), burned:0, level:2, buildings, works:null, manpower: 18};
+    return {owner, army: seedArmy(owner), burned:0, level:1, buildings, works:null, manpower: 12};
   }
   function newGame(home, realmName){
     home = home || 'millford';
@@ -615,6 +651,9 @@
       provinces, memory,
       diplo: Object.fromEntries(AI_IDS.map(id=>[id,'peace'])),
       feel: Object.fromEntries(AI_IDS.map(id=>[id,{score:0, last:HOUSE[id].line}])),
+      captains: seedCaptains(home),
+      vassals: {},
+      capSeq: 3,
       log: [{t:'Year 1 Spring', m:name+' takes '+(labels[home]||home)+'. Fifteen other banners hold seats. A few towns remain free.'}]
     };
   }
@@ -634,6 +673,9 @@
       if(!raw.diplo[fid]) raw.diplo[fid] = 'peace';
       if(!raw.feel[fid]) raw.feel[fid] = {score:0, last:HOUSE[fid].line};
     }
+    raw.vassals = raw.vassals || {};
+    raw.capSeq = raw.capSeq || 3;
+    if(!Array.isArray(raw.captains) || !raw.captains.length || raw.captains.some(c=>c.job && c.martial==null)) raw.captains = seedCaptains(raw.home);
     return raw;
   }
   const account = {
@@ -806,18 +848,25 @@
     };
   }
   function armyCount(a){return Object.values(a).reduce((n,v)=>n+v,0)}
-  function armyPower(a, terrain, smith){
+  function armyPower(a, terrain, smith, sideProv){
     const t = terrain||'open';
     let shot=0,shock=0,line=0,pike=0,raid=0,screen=0;
     for(const [k,n] of Object.entries(a)){
       if(!n) continue;
       const u = UNITS[k];
+      const cap = captainFor(k);
+      let capM = 1;
+      if(cap){
+        capM += cap.martial * 0.025;
+        capM += cap.prowess * 0.015;
+        if(sideProv && cap.seat===sideProv) capM += cap.command * 0.02;
+      }
       const hill = t==='hill' && (k==='longbows'||k==='crossbows') ? 1.25 : 1;
       const wood = t==='wood' && (k==='heavyHorse'||k==='lightHorse'||k==='horseBow') ? .65 : 1;
       const open = t==='open' && (k==='heavyHorse'||k==='horseBow') ? 1.2 : 1;
       const river = t==='river' && (k==='heavyHorse') ? .7 : 1;
       const hold = t==='hold' && u.role==='shot' ? 1.1 : (t==='hold' && u.role==='shock' ? .75 : 1);
-      const m = n * hill * wood * open * river * hold * (smith?1.08:1);
+      const m = n * hill * wood * open * river * hold * (smith?1.08:1) * capM;
       shot += u.shot * m;
       shock += u.shock * m;
       if(u.role==='pike') pike += m*8;
@@ -841,9 +890,9 @@
     if(pike>.25) return 'pike-wall';
     return 'balanced';
   }
-  function resolveBattle(atkA, defA, terrain, atkSmith, defSmith){
-    const A = armyPower(atkA, terrain, atkSmith);
-    const D = armyPower(defA, terrain==='hold'? 'hold' : terrain, defSmith);
+  function resolveBattle(atkA, defA, terrain, atkSmith, defSmith, atkProv, defProv){
+    const A = armyPower(atkA, terrain, atkSmith, atkProv);
+    const D = armyPower(defA, terrain==='hold'? 'hold' : terrain, defSmith, defProv);
     const roll = 0.86 + Math.random()*0.28;
     const score = A.raw * roll - D.raw;
     const ratio = A.raw / Math.max(8, D.raw);
@@ -879,6 +928,209 @@
     pushLog(`${nameOf(focus)} raised ${n} ${UNITS[unit].name}.`);
     save(); render();
   }
+  function ownedRoad(from, to){
+    if(!from || !to || from===to) return false;
+    if(S.provinces[from]?.owner!=='player' || S.provinces[to]?.owner!=='player') return false;
+    const q=[from], seen={[from]:true};
+    while(q.length){
+      const cur = q.shift();
+      for(const n of neighbors(cur)){
+        if(S.provinces[n].owner!=='player') continue;
+        if(n===to) return true;
+        if(!seen[n]){ seen[n]=true; q.push(n); }
+      }
+    }
+    return false;
+  }
+  function sendMen(unit, n, to){
+    if(!focus || !to || !unit) return;
+    const from = focus;
+    const src = S.provinces[from], dst = S.provinces[to];
+    if(!src || !dst || src.owner!=='player' || dst.owner!=='player') return;
+    if(from===to) return toast('They are already in that hold.');
+    if(!ownedRoad(from, to)) return toast('No road of your own between those holds.');
+    n = Math.min(n, src.army[unit]||0);
+    if(n<=0) return toast('No '+UNITS[unit].name+' standing here.');
+    src.army[unit] -= n;
+    dst.army[unit] += n;
+    pushLog(`${n} ${UNITS[unit].name} left ${nameOf(from)} for ${nameOf(to)}.`);
+    toast(`${n} ${UNITS[unit].name} sent to ${nameOf(to)}.`);
+    save(); render();
+  }
+  function sendHost(to){
+    if(!focus || !to) return;
+    const src = S.provinces[focus];
+    if(!src || armyCount(src.army)<=0) return toast('No host to send.');
+    if(!ownedRoad(focus, to)) return toast('No road of your own between those holds.');
+    const dst = S.provinces[to];
+    let n = 0;
+    for(const k of Object.keys(UNITS)){
+      const c = src.army[k]||0;
+      if(!c) continue;
+      src.army[k]=0; dst.army[k]+=c; n+=c;
+    }
+    pushLog('The host left '+nameOf(focus)+' for '+nameOf(to)+'.');
+    toast(n+' men sent to '+nameOf(to)+'.');
+    save(); render();
+  }
+
+  const CAPTAIN_NAMES = ['Aldric','Maud','Rowan','Ivo','Sigrid','Tam','Elowen','Garrick','Nesta','Bram','Osric','Lys','Haf','Petra','Wulfric'];
+  const CAPTAIN_TRAITS = {
+    stern:{label:'Stern', job:'drill'},
+    lucky:{label:'Lucky', job:'collect'},
+    greedy:{label:'Greedy', job:'collect'},
+    pious:{label:'Pious', job:'envoy'},
+    bold:{label:'Bold', job:'guard'},
+    careful:{label:'Careful', job:'guard'}
+  };
+  function rollCapStat(){ return 4 + Math.floor(Math.random()*13); }
+  function makeCaptain(unit, i){
+    const name = CAPTAIN_NAMES[i % CAPTAIN_NAMES.length];
+    const traits = Object.keys(CAPTAIN_TRAITS);
+    return {
+      id: 'c'+(i+1),
+      name: name + (i>=CAPTAIN_NAMES.length ? ' '+Math.floor(i/CAPTAIN_NAMES.length+1) : ''),
+      unit,
+      martial: rollCapStat(),
+      prowess: rollCapStat(),
+      command: rollCapStat(),
+      trait: traits[i % traits.length],
+      hired: false,
+      seat: null
+    };
+  }
+  function seedCaptains(home){
+    const units = Object.keys(UNITS);
+    const out = [];
+    // one candidate per levy type, plus two extras
+    units.forEach((u,i)=> out.push(makeCaptain(u, i)));
+    out.push(makeCaptain(units[Math.floor(Math.random()*units.length)], units.length));
+    out.push(makeCaptain(units[Math.floor(Math.random()*units.length)], units.length+1));
+    return out;
+  }
+  function captainFor(unit){
+    return (S.captains||[]).find(c=>c.hired && c.unit===unit) || null;
+  }
+  function captainCost(c){ return 20 + c.martial*2 + c.prowess; }
+
+  function isVassal(fid){ return !!(S && S.vassals && S.vassals[fid]); }
+  function grantableSeats(){
+    return owned('player').filter(id=>id!==S.home);
+  }
+  function offerVassal(fid, seat){
+    if(!FACTIONS[fid] || fid==='player') return;
+    if(owned(fid).length) return toast('They still hold seats. Break them, or take their last town, before they will kneel.');
+    if(isVassal(fid)) return toast('They already kneel.');
+    if(!seat || !S.provinces[seat] || S.provinces[seat].owner!=='player') return toast('Name a seat you own.');
+    if(seat===S.home) return toast('You cannot grant your first hall.');
+    if(owned('player').length<2) return toast('You need a spare seat to grant.');
+    S.provinces[seat].owner = fid;
+    S.provinces[seat].works = null;
+    S.vassals[fid] = {loyalty:48, seat, since:{year:S.year, season:S.season}};
+    setStance(fid,'peace');
+    addFeel(fid, 20, FACTIONS[fid].name+': We take the seat and the knee.');
+    S.authority += 2;
+    pushLog(FACTIONS[fid].name+' kneels. '+nameOf(seat)+' is theirs under you.');
+    toast(FACTIONS[fid].name+' is your vassal.');
+    save(); render();
+  }
+  function revokeVassal(fid){
+    if(!isVassal(fid)) return;
+    const lands = owned(fid);
+    const loyal = S.vassals[fid].loyalty;
+    delete S.vassals[fid];
+    if(loyal < 25 && lands.length){
+      setStance(fid,'war');
+      addFeel(fid, -30, FACTIONS[fid].name+': '+voiceOf(fid,'war'));
+      pushLog(FACTIONS[fid].name+' refuses the revoke and rises.');
+      toast('They rebel.');
+    } else {
+      for(const id of lands) occupyHold(S.provinces[id], 'player');
+      addFeel(fid, -20, FACTIONS[fid].name+': '+voiceOf(fid,'break'));
+      pushLog('You revoked '+FACTIONS[fid].name+'. Their seats return to you.');
+      toast('Title revoked.');
+    }
+    save(); render();
+  }
+  function hireCaptain(id){
+    const c = (S.captains||[]).find(x=>x.id===id);
+    if(!c) return;
+    if(c.hired) return toast('Already sworn.');
+    if(captainFor(c.unit)) return toast('You already have a '+UNITS[c.unit].name+' captain. Dismiss them first.');
+    const price = captainCost(c);
+    if(S.gold < price) return toast('That captain wants '+price+' gold.');
+    S.gold -= price;
+    c.hired = true;
+    c.seat = S.home;
+    pushLog(c.name+' takes the '+UNITS[c.unit].name+' banner.');
+    toast(c.name+' is your '+UNITS[c.unit].name+' captain.');
+    save(); render();
+  }
+  function dismissCaptain(id){
+    const c = (S.captains||[]).find(x=>x.id===id);
+    if(!c || !c.hired) return;
+    c.hired = false; c.seat = null;
+    pushLog(c.name+' is released from the hall.');
+    toast(c.name+' leaves your service.');
+    save(); render();
+  }
+  function setCaptain(id, field, value){
+    const c = (S.captains||[]).find(x=>x.id===id);
+    if(!c) return;
+    if(field==='seat'){
+      if(!S.provinces[value] || S.provinces[value].owner!=='player') return toast('Station them in a hall you work yourself.');
+      c.seat = value;
+    }
+    if(field==='job') c.job = value;
+    save(); render();
+  }
+  function captainMarch(id, to){
+    const c = (S.captains||[]).find(x=>x.id===id);
+    if(!c) return;
+    const from = c.seat;
+    if(!to || from===to) return toast('Name another of your holds.');
+    if(!ownedRoad(from, to)) return toast('No road of your own for that captain.');
+    const src = S.provinces[from], dst = S.provinces[to];
+    if(armyCount(src.army)<=0) return toast('No men in their seat to take.');
+    for(const k of Object.keys(UNITS)){ dst.army[k]+=src.army[k]; src.army[k]=0; }
+    c.seat = to;
+    pushLog(c.name+' marched the host from '+nameOf(from)+' to '+nameOf(to)+'.');
+    toast(c.name+' has the host at '+nameOf(to)+'.');
+    save(); render();
+  }
+  function runCaptains(){
+    for(const c of (S.captains||[])){
+      if(!c.hired) continue;
+      if(!c.seat || !S.provinces[c.seat] || S.provinces[c.seat].owner!=='player') c.seat = S.home;
+      const st = S.provinces[c.seat];
+      if(c.command>=12) st.manpower = clamp((st.manpower||0)+1, 0, 99);
+    }
+  }
+  function collectVassals(){
+    for(const fid of Object.keys(S.vassals||{})){
+      const lands = owned(fid);
+      if(!lands.length){
+        delete S.vassals[fid];
+        continue;
+      }
+      let gold=0, food=0;
+      for(const id of lands){
+        const p = productionOf(id);
+        gold += Math.floor(p.gold*0.4);
+        food += Math.floor(p.food*0.3);
+      }
+      S.gold += gold; S.food += food;
+      const v = S.vassals[fid];
+      v.loyalty = clamp((v.loyalty||40) + (gold?1:-2), 0, 100);
+      if(v.loyalty<15 && Math.random()<0.25){
+        setStance(fid,'war');
+        delete S.vassals[fid];
+        addFeel(fid, -20, FACTIONS[fid].name+': '+voiceOf(fid,'glove'));
+        pushLog(FACTIONS[fid].name+' throws off the knee.');
+      }
+    }
+  }
+
   function occupyHold(st, newOwner){
     st.owner = newOwner;
     st.works = null;
@@ -927,6 +1179,7 @@
   function canStrike(fid){
     if(!fid || fid==='wild') return true;
     if(fid==='player') return false;
+    if(isVassal(fid)) return false;
     return stance(fid)==='war';
   }
   function feelOf(fid){
@@ -967,16 +1220,16 @@
       if(S.gold < price) return toast('Not enough gold for a gift.');
       S.gold -= price;
       const gain = Math.round(8 * (house.gift||1));
-      addFeel(fid, gain, name+' takes the coffer. "'+(house.greedy>=6?'Coin speaks.':'A courtesy is noted.')+'"');
+      addFeel(fid, gain, name+': '+voiceOf(fid,'gift'));
       pushLog('Gift of '+price+' gold to '+name+'.');
       toast(name+' weighs the gift.');
     } else if(want==='war'){
       if(cur==='war') return toast('Already at war.');
       if(cur==='ally'){
-        addFeel(fid, -24 - house.honor, name+' calls you oathbreaker.');
+        addFeel(fid, -24 - house.honor, name+': '+voiceOf(fid,'break'));
         pushLog('The pact with '+name+' is torn up.');
       } else {
-        addFeel(fid, -16 - Math.floor(house.pride/2), name+' answers the challenge.');
+        addFeel(fid, -16 - Math.floor(house.pride/2), name+': '+voiceOf(fid,'war'));
       }
       setStance(fid,'war');
       S.authority = Math.max(0, S.authority-1);
@@ -986,7 +1239,7 @@
       if(cur==='peace') return toast('Already at peace.');
       if(cur==='ally'){
         setStance(fid,'peace');
-        addFeel(fid, -6, name+' lets the pact lapse, without kindness.');
+        addFeel(fid, -6, name+': '+voiceOf(fid,'break'));
         pushLog('The pact with '+name+' is set aside.');
         toast('Pact ended. Peace remains.');
       } else {
@@ -994,7 +1247,7 @@
         const weak = j.ratio >= 1.25;
         const tired = j.score >= -20 || house.warlike<=3 || weak;
         if(!tired && j.score < -25){
-          addFeel(fid, -4, name+' refuses peace. "'+(house.temper==='vengeful'?'The slight still bleeds.':'We are not done.')+'"');
+          addFeel(fid, -4, name+': '+voiceOf(fid,'peaceNo'));
           toast(name+' refuses peace.');
           save(); render(); return;
         }
@@ -1005,7 +1258,7 @@
         }
         if(demand && S.gold >= demand && !weak){ S.gold -= demand; }
         setStance(fid,'peace');
-        addFeel(fid, 8, name+' agrees to stand down. For now.');
+        addFeel(fid, 8, name+': '+voiceOf(fid,'peaceYes'));
         pushLog('Peace with '+name+'.');
         toast('Peace stands.');
       }
@@ -1016,15 +1269,12 @@
       const wolfBlock = house.temper==='predatory' && j.ratio < 1.15;
       const wildBlock = house.honor<=3 && j.score < 30;
       if(wolfBlock || wildBlock || j.score < need){
-        addFeel(fid, -3, name+' declines the pact. "'+
-          (wolfBlock?'Come back when your host is the larger jaw.':
-           house.temper==='proud'?'We do not sign with lesser halls.':
-           'Not yet.')+'"');
+        addFeel(fid, -3, name+': '+voiceOf(fid,'refuse'));
         toast(name+' declines the pact.');
         save(); render(); return;
       }
       setStance(fid,'ally');
-      addFeel(fid, 12, name+' binds with you. They will not march on your holds.');
+      addFeel(fid, 12, name+': '+voiceOf(fid,'accept'));
       S.authority += 1;
       pushLog(name+' takes your hand.');
       toast('Alliance sealed.');
@@ -1037,19 +1287,19 @@
       const house = HOUSE[fid], name = FACTIONS[fid].name, cur = stance(fid), j = theyJudge(fid);
       if(cur==='ally' && (j.score < 8 || (house.honor<=3 && Math.random()<0.2))){
         setStance(fid,'peace');
-        addFeel(fid, -8, name+' sets the pact aside. "The road turned."');
+        addFeel(fid, -8, name+': '+voiceOf(fid,'break'));
         pushLog(name+' breaks the pact.');
         continue;
       }
       if(cur==='peace' && j.score>=50 && house.honor>=5 && house.warlike<=6 && Math.random()<0.35){
         setStance(fid,'ally');
-        addFeel(fid, 6, name+' offers a binding of their own. You are allied.');
+        addFeel(fid, 6, name+': '+voiceOf(fid,'accept'));
         pushLog(name+' seeks your hand. The pact is made.');
         continue;
       }
       if(cur!=='war' && cur!=='ally' && j.score<=-30 && house.warlike>=6 && j.ratio<0.9 && Math.random()<0.4){
         setStance(fid,'war');
-        addFeel(fid, -10, name+' sends a bloody glove. War is on.');
+        addFeel(fid, -10, name+': '+voiceOf(fid,'glove'));
         pushLog(name+' declares war.');
         continue;
       }
@@ -1080,7 +1330,7 @@
     if(dst.owner!=='wild' && stance(dst.owner)==='ally') return toast('Break the alliance on the Factions tab first.');
     if(dst.owner!=='wild' && !canStrike(dst.owner)) return toast('Declare war on that house first. Factions tab.');
     const smith = (src.buildings.smith||0)>=1;
-    const battle = resolveBattle(marching, dst.army, terrainOf(to), smith, (dst.buildings.smith||0)>=1);
+    const battle = resolveBattle(marching, dst.army, terrainOf(to), smith, (dst.buildings.smith||0)>=1, from, to);
     lastBattle = {
       year:S.year, season:S.season, from, to,
       attacker:'player', defender:dst.owner,
@@ -1140,7 +1390,9 @@
       for(const n of neighbors(h)){
         const own = S.provinces[n].owner;
         if(own===fid) continue;
-        if(own==='player' && stance(fid)==='ally') continue;
+        if(isVassal(fid) && (own==='player' || isVassal(own))) continue;
+        if(own==='player' && (stance(fid)==='ally' || isVassal(fid))) continue;
+        if(isVassal(own) && stance(fid)!=='war') continue;
         if(own!=='player' && own!=='wild' && Math.random()<0.45) continue;
         targets.push({from:h,to:n, own});
       }
@@ -1154,7 +1406,7 @@
     const src = S.provinces[pick.from], dst = S.provinces[pick.to];
     if(armyCount(src.army)<14) return;
     if(Math.random() < (dst.owner==='player'?0.55:0.4)){
-      const battle = resolveBattle(src.army, dst.army, terrainOf(pick.to), (src.buildings.smith||0)>=1, (dst.buildings.smith||0)>=1);
+      const battle = resolveBattle(src.army, dst.army, terrainOf(pick.to), (src.buildings.smith||0)>=1, (dst.buildings.smith||0)>=1, pick.from, pick.to);
       lastBattle = {year:S.year,season:S.season,from:pick.from,to:pick.to,attacker:fid,defender:dst.owner,...battle};
       src.army = emptyArmy();
       if(pick.own==='player' && stance(fid)!=='war') setStance(fid,'war');
@@ -1184,6 +1436,127 @@
     }
     st.works = null;
   }
+
+  let eventQueue = [];
+  function livingHouses(){ return AI_IDS.filter(id=>owned(id).length); }
+  function neighborHouses(){
+    const mine = owned('player');
+    const out = new Set();
+    for(const id of mine) for(const n of neighbors(id)){
+      const o = S.provinces[n].owner;
+      if(o && o!=='player' && o!=='wild') out.add(o);
+    }
+    return [...out];
+  }
+  function queueEvent(ev){ if(ev) eventQueue.push(ev); }
+  function showEvent(){
+    const box = document.getElementById('event');
+    if(!box) return;
+    if(!eventQueue.length){ box.classList.add('hidden'); box.innerHTML=''; return; }
+    const ev = eventQueue[0];
+    box.classList.remove('hidden');
+    box.innerHTML = `<div class="sheet">
+      <div class="eyebrow">${ev.tag||'A letter'}</div>
+      <h3>${ev.title}</h3>
+      <p>${ev.body}</p>
+      <div class="choices">${ev.choices.map((c,i)=>`<button class="btn" data-act="event-pick" data-n="${i}">${c.label}</button>`).join('')}</div>
+    </div>`;
+  }
+  function pickEvent(i){
+    const ev = eventQueue.shift();
+    if(!ev) return;
+    const c = ev.choices[i] || ev.choices[0];
+    if(c.apply) c.apply();
+    if(c.log) pushLog(c.log);
+    toast(c.toast || 'So it is written.');
+    save(); render(); showEvent();
+  }
+  function rollSeasonEvents(){
+    if(!S || !owned('player').length) return;
+    const live = livingHouses();
+    const near = neighborHouses();
+    const pickH = (list)=> (list && list.length) ? list[Math.floor(Math.random()*list.length)] : live[Math.floor(Math.random()*live.length)];
+    const deck = [];
+    const fidN = pickH(near.length?near:live);
+    if(fidN){
+      const n = FACTIONS[fidN].name;
+      deck.push({
+        tag:'Border', title:'Fire on the march of '+n,
+        body:'Riders come in at dusk. A hamlet on the line with '+n+' is smoking. No banner was seen. '+n+' will read whatever you do next as policy.',
+        choices:[
+          {label:'Send gold and timber to rebuild (20 gold, 8 timber)', apply:()=>{ if(S.gold>=20&&S.timber>=8){S.gold-=20;S.timber-=8;addFeel(fidN,10,n+': '+voiceOf(fidN,'gift'));} else {S.authority=Math.max(0,S.authority-1);} }, log:'You rebuilt the border hamlet facing '+n+'.', toast:'The smoke thins.'},
+          {label:'Blame '+n+' and demand blood', apply:()=>{ addFeel(fidN,-14,n+': '+voiceOf(fidN,'war')); if(stance(fidN)!=='war' && HOUSE[fidN].warlike>=6) setStance(fidN,'war'); }, log:'You named '+n+' for the burning.', toast:n+' hears the charge.'},
+          {label:'Do nothing. Borders burn.', apply:()=>{ S.authority=Math.max(0,S.authority-1); addFeel(fidN,-3,n+' watches you swallow the slight.'); }, log:'You let the hamlet lie.', toast:'Authority slips.'}
+        ]
+      });
+    }
+    if(owned('abbey').length || true){
+      const fid='abbey';
+      if(owned(fid).length){
+        deck.push({
+          tag:'Grey Abbey', title:'A tithe is named',
+          body:voiceOf('abbey','gift')+' The Abbey asks a tenth of your spare grain for the hungry of their house — and a good word in the next hall they visit.',
+          choices:[
+            {label:'Pay the tithe (18 food)', apply:()=>{ if(S.food>=18){S.food-=18;addFeel('abbey',12,voiceOf('abbey','accept'));S.authority+=1;} else addFeel('abbey',-4,voiceOf('abbey','refuse')); }, log:'You tithed the Abbey.', toast:'Bells, somewhere.'},
+            {label:'Refuse the monks', apply:()=>{ addFeel('abbey',-10,voiceOf('abbey','refuse')); }, log:'You refused the Abbey tithe.', toast:'The grey letter is short.'}
+          ]
+        });
+      }
+    }
+    const trade = ['amber','salt','wain'].filter(id=>owned(id).length);
+    if(trade.length){
+      const fid=pickH(trade), n=FACTIONS[fid].name;
+      deck.push({
+        tag:'Wagon', title:n+' offers a caravan',
+        body:n+' will run a season of wagons through your holds if you underwrite the risk — or you can take the cargo and live with what that does to the road.',
+        choices:[
+          {label:'Underwrite them (15 gold, hope of return)', apply:()=>{ if(S.gold>=15){S.gold-=15; if(Math.random()<0.65){S.gold+=28;S.food+=8;addFeel(fid,8,n+': '+voiceOf(fid,'gift'));} else {addFeel(fid,3,n+': the wagons came home thin.');} } }, log:'You backed a caravan of '+n+'.', toast:'The wagons roll.'},
+          {label:'Seize the cargo', apply:()=>{ S.gold+=16;S.food+=10; addFeel(fid,-18,n+': '+voiceOf(fid,'war')); if(stance(fid)==='ally'){ setStance(fid,'peace'); } }, log:'You seized a caravan of '+n+'.', toast:n+' will not forget the wagons.'},
+          {label:'Wave them on', apply:()=>{ addFeel(fid,2,n+' notes the open road.'); }, log:n+' passed without a deal.', toast:'Dust on the road.'}
+        ]
+      });
+    }
+    if(owned('wolf').length && stance('wolf')!=='ally'){
+      deck.push({
+        tag:'Wolfmoot', title:'The pack names a hunt',
+        body:voiceOf('wolf','glove')+' They will run a third banner if you feed the hunt — or they may run you later.',
+        choices:[
+          {label:'Feed the hunt (12 food). +feel with Wolfmoot', apply:()=>{ if(S.food>=12){S.food-=12;addFeel('wolf',10,voiceOf('wolf','gift'));} }, log:'You fed the Wolfmoot hunt.', toast:'Howls, far off.'},
+          {label:'Turn them away', apply:()=>{ addFeel('wolf',-8,voiceOf('wolf','refuse')); }, log:'You refused the Wolfmoot.', toast:'The pack circles wider.'}
+        ]
+      });
+    }
+    if(S.food>=40 && Math.random()<0.7){
+      deck.push({
+        tag:'Harvest', title:'A fat year, or a lie about one',
+        body:'Reeves argue whether to store the surplus or feast the levy. A feast buys love. A store buys winter.',
+        choices:[
+          {label:'Store it. +1 authority', apply:()=>{ S.authority+=1; }, log:'You stored the surplus.', toast:'The granaries sit heavy.'},
+          {label:'Feast the levy. −12 food, +6 manpower in your home', apply:()=>{ if(S.food>=12){S.food-=12;} const home=owned('player')[0]; if(home) S.provinces[home].manpower += 6; }, log:'You feasted the levy.', toast:'The yard is loud.'},
+          {label:'Sell the surplus abroad (+22 gold, −16 food)', apply:()=>{ if(S.food>=16){S.food-=16;S.gold+=22;} }, log:'You sold the surplus.', toast:'Coin for grain.'}
+        ]
+      });
+    }
+    const proud = live.filter(id=>HOUSE[id].pride>=7 && stance(id)!=='war');
+    if(proud.length){
+      const fid=pickH(proud), n=FACTIONS[fid].name;
+      deck.push({
+        tag:'Honor', title:n+' asks who you are',
+        body:n+' sends a polite insult dressed as a question. Will you ride to their yard, pay a courtesy, or swallow it?',
+        choices:[
+          {label:'Send a courtesy gift (25 gold)', apply:()=>{ if(S.gold>=25){S.gold-=25;addFeel(fid,9,n+': '+voiceOf(fid,'gift'));} else addFeel(fid,-6,n+': '+voiceOf(fid,'refuse')); }, log:'You answered '+n+' with gold.', toast:n+' marks the courtesy.'},
+          {label:'Swallow the insult', apply:()=>{ S.authority=Math.max(0,S.authority-1); addFeel(fid,-5,n+' files you under meek.'); }, log:'You swallowed an insult from '+n+'.', toast:'The hall notices.'},
+          {label:'Answer in kind', apply:()=>{ addFeel(fid,-12,n+': '+voiceOf(fid,'war')); if(HOUSE[fid].warlike>=7 && Math.random()<0.4) setStance(fid,'war'); }, log:'You answered '+n+' in kind.', toast:n+' smiles with no warmth.'}
+        ]
+      });
+    }
+    // pick 1, sometimes 2
+    if(!deck.length) return;
+    const shuffle = deck.sort(()=>Math.random()-0.5);
+    queueEvent(shuffle[0]);
+    if(Math.random()<0.28 && shuffle[1]) queueEvent(shuffle[1]);
+  }
+
   function endSeason(){
     if(!owned('player').length){toast('Your last hold is lost.');return}
     for(const id of Object.keys(S.provinces)) finishWorks(id);
@@ -1197,7 +1570,10 @@
     for(const fid of AI_IDS){
       if(owned(fid).length){ aiRecruit(fid); aiMarch(fid); }
     }
+    runCaptains();
+    collectVassals();
     aiLetters();
+    rollSeasonEvents();
     if(lastBattle && lastBattle !== before) openView('warfare','report');
     S.season += 1;
     if(S.season>3){S.season=0;S.year+=1}
@@ -1275,7 +1651,65 @@
         </section>
       </div>`;
   }
-  function viewLedger(){
+  function viewHall(){
+    const caps = S.captains || [];
+    const hired = caps.filter(c=>c.hired);
+    const pool = caps.filter(c=>!c.hired);
+    const seats = owned('player');
+    const vassalIds = Object.keys(S.vassals||{});
+    const broken = AI_IDS.filter(id=>!owned(id).length && !isVassal(id));
+    const card = (c, recruit)=>{
+      const trait = (CAPTAIN_TRAITS[c.trait]||{label:c.trait}).label;
+      const dests = seats.filter(id=>id!==c.seat && ownedRoad(c.seat,id));
+      return `<div class="card">
+        <div class="row"><b>${c.name}</b><span class="chip on">${UNITS[c.unit].name}</span></div>
+        <div class="tiny muted">${trait} · Martial ${c.martial} · Prowess ${c.prowess} · Command ${c.command}</div>
+        ${c.hired?`<div class="tiny muted">Stationed at ${nameOf(c.seat)}</div>`:''}
+        <p class="tiny muted">Leads ${UNITS[c.unit].name}. Martial and prowess lift that troop in battle. Command is stronger if they stand in the fighting hold.</p>
+        ${recruit?`<button class="btn small primary" data-act="cap-hire" data-id="${c.id}">Recruit · ${captainCost(c)} gold</button>`:`
+          <div class="row wrap" style="margin-top:8px">
+            ${seats.map(id=>`<button class="btn small" data-act="cap-seat" data-id="${c.id}" data-seat="${id}" ${c.seat===id?'disabled':''}>${nameOf(id)}</button>`).join('')}
+          </div>
+          ${dests.length?`<div class="row wrap" style="margin-top:6px">${dests.map(id=>`<button class="btn small" data-act="cap-march" data-id="${c.id}" data-to="${id}">March host to ${nameOf(id)}</button>`).join('')}</div>`:''}
+          <button class="btn small" style="margin-top:6px" data-act="cap-dismiss" data-id="${c.id}">Dismiss</button>`}
+      </div>`;
+    };
+    return `
+      <div class="split">
+        <section class="panel">
+          <div class="eyebrow">Captains</div>
+          <h2>Who leads each levy</h2>
+          <p class="tiny muted">One captain per troop type. Recruit from the pool. Their stats help that levy in the field.</p>
+          <div class="eyebrow">Sworn</div>
+          <div class="stack">${hired.map(c=>card(c,false)).join('')||'<div class="empty">No captains sworn. Recruit below.</div>'}</div>
+          <div class="eyebrow" style="margin-top:16px">Available to recruit</div>
+          <div class="stack">${pool.map(c=>card(c,true)).join('')||'<div class="empty">No riders waiting.</div>'}</div>
+        </section>
+        <section class="panel">
+          <div class="eyebrow">Vassals</div>
+          <h2>Who kneels</h2>
+          <p class="tiny muted">A broken house will take a spare seat and become your vassal. You cannot grant your first hall.</p>
+          <div class="stack">${vassalIds.map(fid=>{
+            const v=S.vassals[fid], lands=owned(fid);
+            return `<div class="card">
+              <div class="row"><b>${FACTIONS[fid].name}</b><span class="chip on">loyalty ${v.loyalty}</span></div>
+              <div class="tiny muted">${lands.map(nameOf).join(', ')||'no seat'}</div>
+              <button class="btn small danger" style="margin-top:8px" data-act="vassal-revoke" data-id="${fid}">Revoke</button>
+            </div>`;
+          }).join('')||'<div class="empty">No one kneels yet.</div>'}
+          <div class="eyebrow" style="margin-top:16px">Broken houses</div>
+          ${broken.length && grantableSeats().length ? broken.map(fid=>`
+            <div class="card" style="margin-top:8px">
+              <b>${FACTIONS[fid].name}</b>
+              <div class="tiny muted">${HOUSE[fid].line}</div>
+              <div class="row wrap" style="margin-top:8px">
+                ${grantableSeats().map(id=>`<button class="btn small" data-act="vassal-offer" data-id="${fid}" data-seat="${id}">Grant ${nameOf(id)}</button>`).join('')}
+              </div>
+            </div>`).join('') : '<p class="tiny muted">Take a second town, then a house must lose its last seat before it will kneel for a grant.</p>'}
+        </section>
+      </div>`;
+  }
+function viewLedger(){
     return `
       <section class="panel">
         <div class="eyebrow">Season ledger</div>
@@ -1460,7 +1894,25 @@
             const n=st.army[k], max=Math.max(1,armyCount(st.army));
             return `<div class="tiny">${UNITS[k].name}<div class="bar"><i style="width:${n/max*100}%"></i></div></div>`;
           }).join('')}
-          <div class="note" style="margin-top:14px">A mill town with a range is not the same as Ashen Hold with stables. Develop the place you intend to fight from.</div>
+          <div class="eyebrow" style="margin-top:16px">Send men</div>
+          ${(() => {
+            const dests = owned('player').filter(id=>id!==focus && ownedRoad(focus,id));
+            if(!dests.length) return '<p class="tiny muted">Own a second hold on a connecting road to shift this garrison.</p>';
+            return `<label class="tiny muted">To
+              <select id="send-to">${dests.map(id=>`<option value="${id}">${nameOf(id)}</option>`).join('')}</select>
+            </label>
+            <div class="stack" style="margin-top:8px">${Object.keys(UNITS).filter(k=>st.army[k]>0).map(k=>`
+              <div class="row wrap">
+                <span class="tiny">${UNITS[k].name} ${st.army[k]}</span>
+                <div class="step">
+                  <button class="btn small" data-act="send" data-id="${k}" data-n="5">Send 5</button>
+                  <button class="btn small" data-act="send" data-id="${k}" data-n="${st.army[k]}">Send all</button>
+                </div>
+              </div>`).join('')||'<div class="tiny muted">Raise men before you can send them.</div>'}
+            </div>
+            <button class="btn" style="margin-top:10px" data-act="send-host">Send whole host</button>
+            <p class="tiny muted" style="margin-top:8px">They walk your own roads only. Enemy land blocks the way.</p>`;
+          })()}
         </section>
       </div>
       </div>`;
@@ -1595,7 +2047,9 @@
             <button class="btn small" data-act="diplo" data-id="${fid}" data-st="gift" ${!lands.length?'disabled':''}>Gift 25g</button>
             <button class="btn small" data-act="diplo" data-id="${fid}" data-st="ally" ${rel==='ally'||!lands.length?'disabled':''}>Offer pact</button>
             <button class="btn small" data-act="diplo" data-id="${fid}" data-st="peace" ${rel==='peace'||!lands.length?'disabled':''}>Seek peace</button>
-            <button class="btn small danger" data-act="diplo" data-id="${fid}" data-st="war" ${rel==='war'?'disabled':''}>War</button>
+            <button class="btn small danger" data-act="diplo" data-id="${fid}" data-st="war" ${rel==='war'||isVassal(fid)?'disabled':''}>War</button>
+            ${!lands.length && !isVassal(fid) && grantableSeats().length?`<button class="btn small" data-act="open" data-group="realm" data-sub="hall">Offer vassalage</button>`:''}
+            ${isVassal(fid)?'<div class="tiny muted">Vassal of your hall.</div>':''}
           </div>
           </div>
         </section>`}).join('')}
@@ -1634,6 +2088,7 @@
       draw = {
         overview: viewRealm,
         ledger: viewLedger,
+        hall: viewHall,
         map: viewMap,
         settlement: viewSettlement,
         report: viewWar,
@@ -1738,6 +2193,7 @@
     renderNav();
     renderStage();
     renderTutor();
+    showEvent();
   }
 
   document.body.addEventListener('click', e=>{
@@ -1771,6 +2227,14 @@
     }
     if(act==='tutor-close'){ closeTutor(false); return; }
     if(act==='diplo'){ diploAct(btn.dataset.id, btn.dataset.st); return; }
+    if(act==='vassal-offer'){ offerVassal(btn.dataset.id, btn.dataset.seat); return; }
+    if(act==='vassal-revoke'){ revokeVassal(btn.dataset.id); return; }
+    if(act==='cap-hire'){ hireCaptain(btn.dataset.id); return; }
+    if(act==='cap-dismiss'){ dismissCaptain(btn.dataset.id); return; }
+    if(act==='cap-seat'){ setCaptain(btn.dataset.id, 'seat', btn.dataset.seat); return; }
+    if(act==='cap-job'){ setCaptain(btn.dataset.id, 'job', btn.dataset.job); return; }
+    if(act==='cap-march'){ captainMarch(btn.dataset.id, btn.dataset.to); return; }
+    if(act==='event-pick'){ pickEvent(Number(btn.dataset.n)); return; }
     if(act==='select' || btn.classList.contains('node')){
       if(mode==='setup') return;
       const id = btn.dataset.id;
@@ -1783,6 +2247,14 @@
       enterSettlement(btn.dataset.id); render(); return;
     }
     if(act==='recruit') recruit(btn.dataset.id, Number(btn.dataset.n));
+    if(act==='send'){
+      const to = document.getElementById('send-to')?.value;
+      sendMen(btn.dataset.id, Number(btn.dataset.n), to);
+    }
+    if(act==='send-host'){
+      const to = document.getElementById('send-to')?.value;
+      sendHost(to);
+    }
     if(act==='build') startWorks(btn.dataset.id);
     if(act==='level') startLevel();
     if(act==='march') movePlayer(btn.dataset.from, btn.dataset.to);
